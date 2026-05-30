@@ -1,0 +1,2 @@
+- [架构决策](architecture_decisions.md) — 全部架构设计决策（Session 1 + 2）
+- [系统映射](system_mapping.md) — Dota 2 → C# 框架概念映射
