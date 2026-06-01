@@ -7,6 +7,8 @@ public class EventBus
 {
     private readonly Dictionary<string, List<Delegate>> _handlers = new();
 
+    public static EventBus Global { get; } = new();
+
     public void Subscribe(string eventType, Action<object?> handler)
     {
         if (!_handlers.ContainsKey(eventType))
@@ -20,7 +22,7 @@ public class EventBus
             list.Remove(handler);
     }
 
-    public void Publish(string eventType, object? data = null)
+    public void Publish(string eventType, object data = null)
     {
         if (!_handlers.TryGetValue(eventType, out var list)) return;
         // 复制一份以防 handler 修改列表
@@ -36,6 +38,8 @@ public class EventBus
     // 预定义事件类型常量
     public static class Events
     {
+        // ── 基础事件 ──
+        public const string StatChanged = "StatChanged";
         public const string EntitySpawned = "EntitySpawned";
         public const string EntityKilled = "EntityKilled";
         public const string EntityHurt = "EntityHurt";
@@ -44,6 +48,8 @@ public class EventBus
         public const string AbilityUnequipped = "AbilityUnequipped";
         public const string ConstellationUpgrade = "ConstellationUpgrade";
         public const string HealApplied = "HealApplied";
+        public const string OnDealDamage = "OnDealDamage";
+        public const string OnTakeDamage = "OnTakeDamage";
 
         // ── 韧性系统 ──
         public const string ToughnessChanged = "ToughnessChanged";

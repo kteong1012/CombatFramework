@@ -1,0 +1,71 @@
+{
+    // 通用
+    "Name": "eve_attack_light01",
+    "Behaviour": "ABILITY_BEHAVIOUR_NO_TARGET",
+    "AbilitySpecial": {
+        "damage_k": [
+            0.1
+        ],
+        "damge_b": [
+            10,
+            20,
+            30,
+            40,
+            50
+        ],
+        "hp_cost": [
+            10
+        ]
+    },
+    "AbilityUnitDamageElement": "FIRE",
+    // 消耗
+    "AbilityCost": [
+        {
+            "Stat": "HP",
+            "Value": "%hp_cost"
+        }
+    ],
+    "AbilityEvent": {
+        "main_hit": {
+            "TargetTeams": "UNIT_TARGET_TEAM_ENEMY",
+            "Action": [
+                {
+                    "Type": "Damage",
+                    "Action": {
+                        "Target": "DAMAGE_TARGET_TYPE_TARGET",
+                        "Element": "FIRE",
+                        "Damage": {
+                            "Behaviour": "ABILITY_STAT_BEHAVIOUR_STATBASED",
+                            "Value": {
+                                "BaseStat": "Atk",
+                                "K": "%damage_k",
+                                "B": "%damage_b"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "AbilityModifier": {
+        "modifier_atk_bonus": {
+            "IsBuff": true,
+            "IsDebuff": false,
+            "IsHidden": false,
+            "IsPurable": false,
+            "Events": {
+                "OnDealDamage": {
+                    "Action" : [
+                        {
+                            "Type" : "RemoveModifier",
+                            "Action" : {
+                                "Target" : "CASTER",
+                                "ModifierName" : "modifier_atk_bonus"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

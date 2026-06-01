@@ -13,9 +13,9 @@ public class DamageEventData
     public UnitEntity Attacker { get; }
     public float RawDamage { get; set; }
     public float FinalDamage { get; set; }
+    public float ModifiedDamage { get; set; } // 实际扣血
     public string DamageType { get; set; }
     public bool IsCritical { get; set; }
-    public bool IsCancelled { get; set; }
 
     /// <summary>游戏层实体 ID（UI 跳字定位用，CF 只透传）</summary>
     public int HitEntityId { get; set; }

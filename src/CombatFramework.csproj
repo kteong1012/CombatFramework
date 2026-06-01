@@ -4,13 +4,12 @@
     <RootNamespace>CombatFramework</RootNamespace>
     <AssemblyName>CombatFramework</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="MoonSharp" Version="2.0.0" />
+    <InternalsVisibleTo Include="CombatFramework.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="CombatFramework.Tests" />
+    <PackageReference Include="System.Text.Json" Version="10.0.8" />
   </ItemGroup>
 </Project>

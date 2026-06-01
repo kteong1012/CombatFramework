@@ -1,4 +1,4 @@
-using CombatFramework.Core;
+using CombatFramework.Core.Ability;
 
 namespace CombatFramework.Unit;
 
@@ -7,14 +7,14 @@ namespace CombatFramework.Unit;
 /// </summary>
 public class UnitAbilitySlot
 {
-    private readonly List<AbilityInstance> _abilities = new();
+    private readonly List<AbilitySpec> _abilities = new();
     private readonly UnitEntity _owner;
 
-    public IReadOnlyList<AbilityInstance> All => _abilities;
+    public IReadOnlyList<AbilitySpec> All => _abilities;
 
     public UnitAbilitySlot(UnitEntity owner) => _owner = owner;
 
-    public void Equip(AbilityInstance ability)
+    public void Equip(AbilitySpec ability)
     {
         if (_abilities.Any(a => a.Name == ability.Name)) return;
         _abilities.Add(ability);
@@ -25,9 +25,9 @@ public class UnitAbilitySlot
         _abilities.RemoveAll(a => a.Name == abilityName);
     }
 
-    public AbilityInstance? Get(string idOrName) =>
+    public AbilitySpec? Get(string idOrName) =>
         _abilities.FirstOrDefault(a => a.Name == idOrName || a.Data.Id == idOrName);
 
-    public AbilityInstance? GetByIndex(int index) =>
+    public AbilitySpec? GetByIndex(int index) =>
         index >= 0 && index < _abilities.Count ? _abilities[index] : null;
 }

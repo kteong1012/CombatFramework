@@ -23,4 +23,8 @@
     <ProjectReference Include="..\src\CombatFramework.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Demo\" />
+  </ItemGroup>
+
 </Project>

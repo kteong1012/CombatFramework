@@ -1,5 +1,4 @@
 namespace CombatFramework.Core;
-
 /// <summary>CF 内部使用的资源槽与 stat 字符串 ID 常量。</summary>
 public static class StatId
 {

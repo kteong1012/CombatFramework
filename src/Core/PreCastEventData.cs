@@ -1,3 +1,5 @@
+using CombatFramework.Core.Ability;
+
 namespace CombatFramework.Core;
 
 /// <summary>
@@ -5,11 +7,11 @@ namespace CombatFramework.Core;
 /// </summary>
 public class PreCastEventData
 {
-    public AbilityInstance Ability { get; }
+    public AbilitySpec Ability { get; }
     public bool IsCancelled { get; private set; }
     public string? CancelReason { get; private set; }
 
-    public PreCastEventData(AbilityInstance ability)
+    public PreCastEventData(AbilitySpec ability)
     {
         Ability = ability;
     }
