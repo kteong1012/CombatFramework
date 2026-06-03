@@ -1,0 +1,38 @@
+{
+    "Name": "active_attack",
+    "AbilityCosts": [
+        {
+            "Stat": "Energy",
+            "Value": { "$type": "const", "Value": 30.0 }
+        }
+    ],
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "ForEachHitActionData",
+                "Target": {
+                    "$type": "BoxTargetSelector",
+                    "Center": "Caster",
+                    "Offset":       { "X": 120.0, "Y": 0.0, "Z": 0.0 },
+                    "EulerRotation":{ "X": 0.0, "Y": 0.0, "Z": 0.0 },
+                    "Size":         { "X": 240.0, "Y": 160.0, "Z": 1.0 },
+                    "Teams": "All"
+                }
+            }
+        ],
+        "OnHitTarget": [
+            {
+                "$type": "DamageActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "Element": "FIRE",
+                "Damage": {
+                    "$type": "kxb",
+                    "BaseStat": "Atk",
+                    "K": { "$type": "const", "Value": 0.5 },
+                    "B": { "$type": "const", "Value": 0.0 }
+                },
+                "Teams": "Enemy"
+            }
+        ]
+    }
+}

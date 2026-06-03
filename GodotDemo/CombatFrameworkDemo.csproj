@@ -1,0 +1,14 @@
+<Project Sdk="Godot.NET.Sdk/4.6.3">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- CombatFramework 核心 DLL，Release 改成 Release 路径即可 -->
+    <Reference Include="CombatFramework">
+      <HintPath>..\src\bin\Debug\net8.0\CombatFramework.dll</HintPath>
+    </Reference>
+    <!-- CombatFramework 依赖 Newtonsoft.Json，需一起引入 -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+</Project>
