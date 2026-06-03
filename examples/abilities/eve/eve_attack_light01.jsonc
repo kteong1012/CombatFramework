@@ -1,8 +1,7 @@
 {
     // 通用
     "Name": "eve_attack_light01",
-    "Behaviour": "ABILITY_BEHAVIOUR_NO_TARGET",
-    "AbilitySpecial": {
+    "AbilitySpecialFields": {
         "damage_k": [
             0.1
         ],
@@ -17,36 +16,41 @@
             10
         ]
     },
-    "AbilityUnitDamageElement": "FIRE",
     // 消耗
-    "AbilityCost": [
+    "AbilityCosts": [
         {
             "Stat": "HP",
-            "Value": "%hp_cost"
+            "Value": {
+                "$type": "special",
+                "Name": "hp_cost"
+            }
         }
     ],
-    "AbilityEvent": {
-        "main_hit": {
-            "TargetTeams": "UNIT_TARGET_TEAM_ENEMY",
-            "Action": [
+    "AbilityEvents": [
+        {
+            "Name": "MainHit",
+            "TargetTeams": "Enemy",
+            "Actions": [
                 {
-                    "Type": "Damage",
-                    "Action": {
-                        "Target": "DAMAGE_TARGET_TYPE_TARGET",
-                        "Element": "FIRE",
-                        "Damage": {
-                            "Behaviour": "ABILITY_STAT_BEHAVIOUR_STATBASED",
-                            "Value": {
-                                "BaseStat": "Atk",
-                                "K": "%damage_k",
-                                "B": "%damage_b"
-                            }
+                    "$type": "damage",
+                    "Target": "DAMAGE_TARGET_TYPE_TARGET",
+                    "Element": "FIRE",
+                    "Damage": {
+                        "$type": "kxb",
+                        "BaseStat": "Atk",
+                        "K": {
+                            "$type": "special",
+                            "Name": "damage_k"
+                        },
+                        "B": {
+                            "$type": "special",
+                            "Name": "damage_b"
                         }
                     }
                 }
             ]
         }
-    },
+    ],
     "AbilityModifier": {
         "modifier_atk_bonus": {
             "IsBuff": true,
@@ -55,12 +59,12 @@
             "IsPurable": false,
             "Events": {
                 "OnDealDamage": {
-                    "Action" : [
+                    "Action": [
                         {
-                            "Type" : "RemoveModifier",
-                            "Action" : {
-                                "Target" : "CASTER",
-                                "ModifierName" : "modifier_atk_bonus"
+                            "Type": "RemoveModifier",
+                            "Action": {
+                                "Target": "CASTER",
+                                "ModifierName": "modifier_atk_bonus"
                             }
                         }
                     ]

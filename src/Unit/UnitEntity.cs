@@ -23,12 +23,16 @@ public class UnitEntity
     public TagSystem Tags { get; }
     public float Level { get; set; } = 1;
 
+    public Dictionary<string,object> Blackboard { get; set; }
+
     public UnitEntity()
     {
         Tags = new TagSystem();
         AbilitySlots = new UnitAbilitySlot(this);
         ModifierManager = new ModifierManager(this);
         Stats = new StatsManager();
+
+        Blackboard = new Dictionary<string, object>();
     }
 
     public void Update(float dt)

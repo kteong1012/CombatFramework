@@ -1,25 +1,34 @@
 ﻿using CombatFramework.Core.Ability;
+using CombatFramework.Core.Model;
+using Newtonsoft.Json;
 
 namespace CombatFramework.Core.Executor.ValueGetter
 {
-    public class AbilitySpecialGetter : IValueGetter<AbilitySpec>
+    [JsonAlias("special")]
+    public class AbilitySpecialGetter : IAbilityValueGetter
     {
-        private readonly string name;
+        [JsonProperty("Name")]
+        private string _name;
+
+        public AbilitySpecialGetter()
+        {
+            _name = string.Empty;
+        }
 
         public AbilitySpecialGetter(string name)
         {
-            this.name = name;
+            _name = name;
         }
 
         public float GetValue(AbilitySpec context)
         {
-            if (context.TryGetLevelValue(name, out var value))
+            if (context.TryGetLevelValue(_name, out var value))
             {
                 return value;
             }
             else
             {
-                CFLog.Warning($"AbilitySpecial {name} not found in ability {context.data.Name}, return 0");
+                CFLog.Warning($"AbilitySpecial {_name} not found in ability {context.data.Name}, return 0");
                 return 0f;
             }
         }

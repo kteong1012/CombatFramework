@@ -10,3 +10,4 @@ packages/
 *.nupkg
 .DS_Store
 Thumbs.db
+.vscode/settings.json

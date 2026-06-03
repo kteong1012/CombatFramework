@@ -1,15 +1,22 @@
+using CombatFramework.Core.Enums;
+using CombatFramework.Unit;
+using System.Numerics;
+
 namespace CombatFramework.Core;
 
 /// <summary>
-/// CF 全局服务注册槽位——游戏方（Unity）注入实现。
+/// 空间单位查询接口，由 Unity 层实现并注入 CFServices.UnitQuery。
+/// </summary>
+public interface IUnitQueryService
+{
+    IEnumerable<UnitEntity> QueryUnitsInRadius(
+        Vector3 center, float radius, TeamFilter teams, UnitEntity self);
+}
+
+/// <summary>
+/// 框架全局服务注入点。游戏层启动时赋值，框架内部通过此类访问。
 /// </summary>
 public static class CFServices
 {
-    /// <summary>NavMesh 采样（爆炸/投射物落点修正）</summary>
-    public static INavMeshService? NavMesh { get; set; }
-
-    private static readonly Random _defaultRng = new();
-
-    /// <summary>提供 [0, 1) 随机数（默认 System.Random；Unity 侧注入 RandomService）</summary>
-    public static Func<double> RandomProvider { get; set; } = () => _defaultRng.NextDouble();
+    public static IUnitQueryService UnitQuery { get; set; }
 }

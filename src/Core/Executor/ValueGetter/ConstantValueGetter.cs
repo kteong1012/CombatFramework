@@ -1,36 +1,22 @@
-﻿using CombatFramework.Bridge;
-using CombatFramework.Core.Ability;
-using System.Reflection;
+﻿using CombatFramework.Core.Ability;
+using CombatFramework.Core.Model;
+using Newtonsoft.Json;
 
 namespace CombatFramework.Core.Executor.ValueGetter
 {
-    public class ConstantValueGetter<T> : IValueGetter<T>
+    [JsonAlias("const")]
+    public class ConstantValueGetter : IAbilityValueGetter
     {
-        private readonly float _value;
+        [JsonProperty("Value")]
+        public float Value { get; private set; }
+
+        public ConstantValueGetter() { }
+
         public ConstantValueGetter(float value)
         {
-            _value = value;
-        }
-        public float Value => _value;
-
-        public float GetValue(T context)
-        {
-            return _value;
-        }
-    }
-
-    public class CustomValueGetter<T> : IValueGetter<T>
-    {
-        private readonly Func<T, float> del;
-
-        public CustomValueGetter(Func<T, float> del)
-        {
-            this.del = del;
+            Value = value;
         }
 
-        public float GetValue(T context)
-        {
-            return del(context);
-        }
+        public float GetValue(AbilitySpec context) => Value;
     }
 }

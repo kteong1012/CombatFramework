@@ -25,8 +25,8 @@ public class UnitAbilitySlot
         _abilities.RemoveAll(a => a.Name == abilityName);
     }
 
-    public AbilitySpec? Get(string idOrName) =>
-        _abilities.FirstOrDefault(a => a.Name == idOrName || a.Data.Id == idOrName);
+    public AbilitySpec? Get(string name) =>
+        _abilities.FirstOrDefault(a => a.Name == name);
 
     public AbilitySpec? GetByIndex(int index) =>
         index >= 0 && index < _abilities.Count ? _abilities[index] : null;

@@ -1,40 +1,14 @@
-using CombatFramework.Core.Executor.AbilityExecutor;
-using CombatFramework.Core.Executor.ValueGetter;
 using CombatFramework.Core.Modifier;
+using CombatFramework.Core.Model;
 using CombatFramework.Unit;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace CombatFramework.Core.Ability;
-
-public class AbilityData
-{
-    public Dictionary<string, LevelValue> dynamicValues = new();
-
-
-    public Dictionary<string, IValueGetter<AbilitySpec>> costMaps = new();
-
-    public Dictionary<string, AbilityEventExecutor> eventExecutors = new();
-
-    public string Name { get; internal set; }
-    public string Element { get; internal set; }
-
-    #region Nested Types
-    public class LevelValue
-    {
-        public float[] values;
-    }
-    #endregion
-}
 public class AbilitySpec
 {
-    #region Delegates Definitions
-    delegate float GetDynamicValueDelegate();
-    #endregion
-
     #region Variables
     public AbilityData data;
-    public UnitEntity Unit { get; set; }
+    public string Name => data?.Name;
+    public UnitEntity Owner { get; set; }
     public int Level { get; set; } = 0;
     #endregion
 
@@ -46,27 +20,22 @@ public class AbilitySpec
             value = 0;
             return false;
         }
-        if (!data.dynamicValues.TryGetValue(name, out var levelValue))
+        if (!data.AbilitySpecialFields.TryGetValue(name, out var levelValues))
         {
             value = 0;
             return false;
         }
         var index = Level - 1;
-        // 如果index > length， 就取最后一个
-        if (index >= levelValue.values.Length)
+        if (index >= levelValues.Length)
         {
-            value = levelValue.values[levelValue.values.Length - 1];
+            value = levelValues[levelValues.Length - 1];
             return true;
         }
         else
         {
-            value = levelValue.values[index];
+            value = levelValues[index];
             return true;
         }
-
     }
-    #endregion
-
-    #region Private Methods
     #endregion
 }

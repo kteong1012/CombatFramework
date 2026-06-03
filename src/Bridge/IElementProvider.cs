@@ -15,4 +15,9 @@ namespace CombatFramework.Bridge
         MethodInfo GetMethodInfo(string className, string methodName);
         MethodInfo GetMethodInfo(string methodName);
     }
+
+    public interface ITypeProvider
+    {
+        Type[] GetTypes();
+    }
 }

@@ -11,14 +11,17 @@ namespace CombatFramework.Bridge
     {
         public IElementProvider ElementProvider { get; }
         public IMethodProvider MethodProvider { get; }
+        public ITypeProvider TypeProvider { get; }
 
         protected AbstractCombatFrameBridge()
         {
             ElementProvider = CreateElementProvider();
             MethodProvider = CreateMethodProvider();
+            TypeProvider = CreateTypeProvider();
         }
 
         protected abstract IElementProvider CreateElementProvider();
         protected abstract IMethodProvider CreateMethodProvider();
+        protected abstract ITypeProvider CreateTypeProvider();
     }
 }

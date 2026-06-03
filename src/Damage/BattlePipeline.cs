@@ -36,8 +36,8 @@ public static class BattlePipeline
         }
 
         // todo 乘区还有需求，暂时后续会变
-        var critRate = attacker.GetStat(StatId.CritRate);
-        var critDmg = attacker.GetStat(StatId.CritDMG);
+        var critRate = attacker.GetStat("CritRate");
+        var critDmg = attacker.GetStat("CritDMG");
         var critMult = Formula.CalculateCriticalMultiplier(critRate, critDmg, out var isCrit);
 
         var amplifyStat = CFBridge.Bridge.ElementProvider.GetAmplifyStat(element);
@@ -56,16 +56,16 @@ public static class BattlePipeline
 
 
         // HpMin 夹底
-        var currentHp = victim.GetStat(StatId.HP);
-        var hpMin = victim.GetStat(StatId.HpMin);
+        var currentHp = victim.GetStat("HP");
+        var hpMin = victim.GetStat("HpMin");
         var maxDamage = Math.Max(0f, currentHp - hpMin);
         var damageToConsume = Math.Min(eventData.FinalDamage, maxDamage);
-        victim.Stats.Add(StatId.HP, damageToConsume);
+        victim.Stats.Add("HP", damageToConsume);
         eventData.ModifiedDamage = damageToConsume;
 
         EventBus.Global.Publish(EventBus.Events.OnDealDamage, eventData);
 
-        if (eventData.ModifiedDamage > 0 && victim.GetStat(StatId.HP) <= 0)
+        if (eventData.ModifiedDamage > 0 && victim.GetStat("HP") <= 0)
         {
             EventBus.Global.Publish(EventBus.Events.EntityKilled,
                 new { Victim = victim, Attacker = attacker });
@@ -77,14 +77,14 @@ public static class BattlePipeline
     {
         //if (target == null || rawHeal <= 0) return;
 
-        //var healBonus = source.GetStat(StatId.HealBonus);
+        //var healBonus = source.GetStat("HealBonus");
         //var finalHeal = rawHeal * (1 + healBonus / 100f);
 
         //var eventData = new HealEventData(target, source, rawHeal) { FinalHeal = finalHeal };
         //GlobalEventBus.Publish(EventBus.Events.HealApplied, eventData);
         //if (eventData.IsCancelled) return 0;
 
-        //target.Resources.Restore(StatId.HP, finalHeal);
+        //target.Resources.Restore("HP", finalHeal);
         //return finalHeal;
     }
 
@@ -93,12 +93,12 @@ public static class BattlePipeline
     {
         //if (victim == null || attacker == null || breakAmount <= 0) return 0;
 
-        //var slot = victim.Resources.Get(StatId.Toughness);
+        //var slot = victim.Resources.Get("Toughness");
         //if (slot == null) return 0;
 
         //var oldVal = slot.Current;
         //var maxVal = slot.Max;
-        //var consumed = victim.Resources.ConsumeSafe(StatId.Toughness, breakAmount, 0);
+        //var consumed = victim.Resources.ConsumeSafe("Toughness", breakAmount, 0);
         //var newVal = slot.Current;
 
         //var evt = new ToughnessEventData(victim, attacker, oldVal, newVal, maxVal);
