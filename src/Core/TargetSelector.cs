@@ -57,3 +57,30 @@ public class AreaTargetSelector : TargetSelector
         return service.QueryUnitsInRadius(origin, Radius, Teams, self);
     }
 }
+
+/// <summary>盒形范围目标：以 Center 为原点，按 offset/eulerRotation/size 描述盒形，按 Teams 过滤。</summary>
+public class BoxTargetSelector : TargetSelector
+{
+    public TargetType Center { get; set; } = TargetType.Caster;
+    public Vector3 Offset { get; set; }
+    public Vector3 EulerRotation { get; set; }
+    public Vector3 Size { get; set; } = new Vector3(1f, 1f, 1f);
+    public TeamFilter Teams { get; set; } = TeamFilter.All;
+
+    public override IEnumerable<UnitEntity> Resolve(AbilityEventContext context)
+    {
+        var service = CFServices.ShapeQuery;
+        if (service == null)
+            return Enumerable.Empty<UnitEntity>();
+
+        var origin = Center switch
+        {
+            TargetType.Target => context.Target?.Position ?? Vector3.Zero,
+            TargetType.Owner  => context.Ability?.Owner?.Position ?? Vector3.Zero,
+            _                 => context.Caster?.Position ?? Vector3.Zero,
+        };
+
+        var self = Center == TargetType.Target ? context.Target : context.Caster;
+        return service.QueryBox(origin, Offset, EulerRotation, Size, Teams, self);
+    }
+}

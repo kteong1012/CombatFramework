@@ -1,0 +1,13 @@
+{
+    "Name": "test_damage_single_target",
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "DamageActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "Element": "FIRE",
+                "Damage": { "$type": "const", "Value": 100.0 }
+            }
+        ]
+    }
+}

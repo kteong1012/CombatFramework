@@ -1,0 +1,20 @@
+{
+    "Name": "test_apply_modifier",
+    "AbilitySpecialFields": {},
+    "AbilityCosts": [],
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "ModifierName": "mod_apply_test"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_apply_test": {
+            "Name": "mod_apply_test",
+            "IsBuff": true
+        }
+    }
+}

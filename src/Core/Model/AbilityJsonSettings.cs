@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace CombatFramework.Core.Model;
 
@@ -12,5 +13,6 @@ public static class AbilityJsonSettings
         TypeNameHandling = TypeNameHandling.Auto,
         SerializationBinder = new ValueGetterAliasBinder(),
         NullValueHandling = NullValueHandling.Ignore,
+        Converters = { new StringEnumConverter() },
     };
 }

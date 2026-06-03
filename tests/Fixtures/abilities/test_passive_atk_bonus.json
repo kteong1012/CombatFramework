@@ -1,0 +1,33 @@
+{
+    "Name": "passive_atk_bonus",
+    "AbilityEvents": {
+        "OnEquipped": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_atk_bonus"
+            }
+        ],
+        "OnUnequipped": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_atk_bonus"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_atk_bonus": {
+            "Name": "mod_atk_bonus",
+            "IsBuff": true,
+            "StackMode": "Permanent",
+            "Properties": [
+                {
+                    "Stat": "Atk_Mult",
+                    "Op": "Add",
+                    "Value": { "$type": "const", "Value": 0.2 }
+                }
+            ]
+        }
+    }
+}

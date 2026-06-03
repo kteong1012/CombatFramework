@@ -1,6 +1,8 @@
 using System.Numerics;
+using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability;
+using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Core.Modifier;
 using CombatFramework.Core.Stat;
 
@@ -45,6 +47,27 @@ public class UnitEntity
     public bool HasTag(string tag) => Tags.HasTag(tag);
     public float GetStat(string statId) => Stats.Get(statId);
 
+    /// <summary>
+    /// 尝试施放指定槽位的技能。
+    /// 流程：检查 cost → 扣除资源 → 委托 Bridge 执行技能流程（如 Timeline）。
+    /// Bridge 负责在适当时机（前摇结束）触发 OnAbilityPhaseStart / OnSpellStart。
+    /// 测试环境下 Bridge 可直接依次触发这两个事件。
+    /// </summary>
+    /// <param name="slotIndex">槽位下标（0-based）。预留枚举重载，当前以 int 为主。</param>
+    /// <param name="target">技能目标，可为 null。</param>
+    /// <returns>true = 已交由 Bridge 执行；false = 槽位无效或 cost 不足。</returns>
+    public bool TryCast(int slotIndex, UnitEntity target = null)
+    {
+        var ability = AbilitySlots.GetByIndex(slotIndex);
+        if (ability == null) return false;
+        if (!ability.CanCast(out _)) return false;
+
+        ability.DeductCosts();
+
+        var ctx = new AbilityEventContext { Ability = ability, Caster = this, Target = target };
+        CFBridge.Bridge?.StartAbility(ability, ctx);
+        return true;
+    }
 }
 
 public enum TeamFlag

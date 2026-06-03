@@ -1,0 +1,18 @@
+{
+    "Name": "test_damage_area",
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "DamageActionData",
+                "Target": {
+                    "$type": "AreaTargetSelector",
+                    "Center": "Caster",
+                    "Radius": 300.0,
+                    "Teams": "Enemy"
+                },
+                "Element": "FIRE",
+                "Damage": { "$type": "const", "Value": 100.0 }
+            }
+        ]
+    }
+}

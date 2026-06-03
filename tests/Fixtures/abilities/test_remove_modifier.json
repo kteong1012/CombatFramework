@@ -1,0 +1,18 @@
+{
+    "Name": "test_remove_modifier",
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "ModifierName": "mod_remove_test"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_remove_test": {
+            "Name": "mod_remove_test",
+            "IsBuff": true
+        }
+    }
+}

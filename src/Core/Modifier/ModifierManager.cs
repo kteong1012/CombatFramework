@@ -22,22 +22,25 @@ public class ModifierManager
     {
         if (data.StackMode == ModifierStackMode.Multiple)
         {
-            _pendingAdd.Add(new ModifierSpec(data, _owner, caster, sourceAbility));
+            var spec = ModifierSpec.Create(data, _owner, caster, sourceAbility);
+            _pendingAdd.Add(spec);
+            spec.OnCreated();
             return;
         }
 
-        // None / Permanent / StackCount：先找已有实例（含 pending）
         var existing = Find(data.Name);
         if (existing != null)
         {
             if (data.StackMode == ModifierStackMode.StackCount)
                 existing.IncrementStack();
             else
-                existing.SetDuration(data.DurationGetter); // Refresh
+                existing.SetDuration(data.DurationGetter);
             return;
         }
 
-        _pendingAdd.Add(new ModifierSpec(data, _owner, caster, sourceAbility));
+        var newSpec = ModifierSpec.Create(data, _owner, caster, sourceAbility);
+        _pendingAdd.Add(newSpec);
+        newSpec.OnCreated();
     }
 
     // ─── 移除 ─────────────────────────────────────────────────
@@ -56,6 +59,7 @@ public class ModifierManager
             return 1;
         }
 
+        target.OnDestroy();
         _pendingAdd.Remove(target);
         _modifiers.Remove(target);
         return 1;

@@ -2,6 +2,6 @@
 {
     public static class CFBridge
     {
-        public static AbstractCombatFrameBridge Bridge { get; set; }
+        public static AbstractCombatFrameworkBridge Bridge { get; set; }
     }
 }

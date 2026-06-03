@@ -1,0 +1,25 @@
+{
+    "Name": "test_stack_modifier",
+    "AbilityEvents": {
+        "OnAbilityPhaseStart": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "ModifierName": "mod_stack_test"
+            }
+        ],
+        "OnSpellStart": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "ModifierName": "mod_stack_test"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_stack_test": {
+            "Name": "mod_stack_test",
+            "StackMode": "StackCount"
+        }
+    }
+}

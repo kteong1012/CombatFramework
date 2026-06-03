@@ -15,14 +15,15 @@ namespace CombatFramework.Tests.Integration;
 /// 验证三个关注点：
 ///   1. 序列化往返（ActionData + TargetSelector 多态）
 ///   2. Data 模板无状态——多次执行不修改模板字段
-///   3. 事件触发端到端——Action.Execute 产生预期副作用
+///   3. 事件触发端到端——ability.On*() 事件方法产生预期副作用
+///
+/// 所有 AbilityData 均从 tests/Fixtures/abilities/ 目录的 JSON 文件读取。
 /// </summary>
 public class AbilityEventActionTests
 {
     // ─── 测试初始化 ──────────────────────────────────────────
     static AbilityEventActionTests()
     {
-        // 每个测试文件只需初始化一次 Bridge
         if (CFBridge.Bridge == null)
             CFBridge.Bridge = new TestBridge();
     }
@@ -32,69 +33,54 @@ public class AbilityEventActionTests
     [Fact]
     public void Serialize_ApplyModifierActionData_RoundTrip()
     {
-        var original = new ApplyModifierActionData
-        {
-            Target = new SingleTargetSelector { Type = TargetType.Target },
-            ModifierName = "modifier_atk_bonus",
-        };
+        // 从文件加载 → 再序列化 → 再反序列化，验证多态类型还原正确
+        var data = LoadAbility("test_apply_modifier.json");
 
-        var json = JsonConvert.SerializeObject(original, AbilityJsonSettings.Instance);
-        var restored = JsonConvert.DeserializeObject<ApplyModifierActionData>(json, AbilityJsonSettings.Instance);
+        var json = JsonConvert.SerializeObject(data, AbilityJsonSettings.Instance);
+        var restored = JsonConvert.DeserializeObject<AbilityData>(json, AbilityJsonSettings.Instance);
 
         Assert.NotNull(restored);
-        Assert.Equal("modifier_atk_bonus", restored.ModifierName);
-        Assert.IsType<SingleTargetSelector>(restored.Target);
-        Assert.Equal(TargetType.Target, ((SingleTargetSelector)restored.Target).Type);
+        var action = Assert.IsType<ApplyModifierActionData>(
+            restored.AbilityEvents[AbilityEvents.OnSpellStart][0]);
+        Assert.Equal("mod_apply_test", action.ModifierName);
+        var selector = Assert.IsType<SingleTargetSelector>(action.Target);
+        Assert.Equal(TargetType.Target, selector.Type);
     }
 
     [Fact]
     public void Serialize_DamageActionData_WithAreaTarget_RoundTrip()
     {
-        var original = new DamageActionData
-        {
-            Target = new AreaTargetSelector { Center = TargetType.Caster, Radius = 300f, Teams = TeamFilter.Enemy },
-            Element = "FIRE",
-            Damage = new ConstantValueGetter(100f),
-        };
+        var data = LoadAbility("test_damage_area.json");
 
-        var json = JsonConvert.SerializeObject(original, AbilityJsonSettings.Instance);
-        var restored = JsonConvert.DeserializeObject<DamageActionData>(json, AbilityJsonSettings.Instance);
+        var json = JsonConvert.SerializeObject(data, AbilityJsonSettings.Instance);
+        var restored = JsonConvert.DeserializeObject<AbilityData>(json, AbilityJsonSettings.Instance);
 
         Assert.NotNull(restored);
-        Assert.Equal("FIRE", restored.Element);
-        var area = Assert.IsType<AreaTargetSelector>(restored.Target);
+        var action = Assert.IsType<DamageActionData>(
+            restored.AbilityEvents[AbilityEvents.OnSpellStart][0]);
+        Assert.Equal("FIRE", action.Element);
+        var area = Assert.IsType<AreaTargetSelector>(action.Target);
+        Assert.Equal(TargetType.Caster, area.Center);
         Assert.Equal(300f, area.Radius);
         Assert.Equal(TeamFilter.Enemy, area.Teams);
-        Assert.Equal(TargetType.Caster, area.Center);
+        var constGetter = Assert.IsType<ConstantValueGetter>(action.Damage);
+        Assert.Equal(100f, constGetter.Value);
     }
 
     [Fact]
     public void Serialize_AbilityData_WithEvents_RoundTrip()
     {
-        var abilityData = new AbilityData
-        {
-            Name = "test_ability",
-            AbilityModifiers = new Dictionary<string, ModifierData>
-            {
-                ["mod_a"] = new ModifierData { Name = "mod_a", IsBuff = true },
-            },
-            AbilityEvents = new List<AbilityEventActionData>
-            {
-                new ApplyModifierActionData
-                {
-                    Target = new SingleTargetSelector { Type = TargetType.Target },
-                    ModifierName = "mod_a",
-                },
-            },
-        };
+        var data = LoadAbility("test_apply_modifier.json");
 
-        var json = JsonConvert.SerializeObject(abilityData, AbilityJsonSettings.Instance);
+        var json = JsonConvert.SerializeObject(data, AbilityJsonSettings.Instance);
         var restored = JsonConvert.DeserializeObject<AbilityData>(json, AbilityJsonSettings.Instance);
 
         Assert.NotNull(restored);
-        Assert.Single(restored.AbilityEvents);
-        Assert.IsType<ApplyModifierActionData>(restored.AbilityEvents[0]);
-        Assert.True(restored.AbilityModifiers["mod_a"].IsBuff);
+        Assert.Equal("test_apply_modifier", restored.Name);
+        Assert.True(restored.AbilityEvents.ContainsKey(AbilityEvents.OnSpellStart));
+        Assert.Single(restored.AbilityEvents[AbilityEvents.OnSpellStart]);
+        Assert.IsType<ApplyModifierActionData>(restored.AbilityEvents[AbilityEvents.OnSpellStart][0]);
+        Assert.True(restored.AbilityModifiers["mod_apply_test"].IsBuff);
     }
 
     // ─── 2. Data 模板无状态 ────────────────────────────────────
@@ -102,35 +88,20 @@ public class AbilityEventActionTests
     [Fact]
     public void Execute_ApplyModifier_DataIsUnchanged_AfterMultipleExecutions()
     {
-        var modData = new ModifierData { Name = "mod_stateless", IsBuff = true };
-        var abilityData = new AbilityData
-        {
-            Name = "stateless_test",
-            AbilityModifiers = new Dictionary<string, ModifierData> { ["mod_stateless"] = modData },
-        };
-        var actionData = new ApplyModifierActionData
-        {
-            Target = new SingleTargetSelector { Type = TargetType.Target },
-            ModifierName = "mod_stateless",
-        };
-
-        var action = AbilityEventAction.Create(actionData);
-        Assert.NotNull(action);
+        var abilityData = LoadAbility("test_apply_modifier.json");
+        var actionData = (ApplyModifierActionData)abilityData.AbilityEvents[AbilityEvents.OnSpellStart][0];
 
         var (caster, target) = MakeUnits();
         var ability = MakeAbility(abilityData, caster);
 
-        // 执行三次
+        // 执行三次，走完整事件派发路径
         for (int i = 0; i < 3; i++)
-        {
-            var ctx = MakeContext(ability, caster, target);
-            action.Execute(ctx);
-        }
+            ability.OnSpellStart(MakeContext(ability, caster, target));
 
         // 模板字段不变
-        Assert.Equal("mod_stateless", actionData.ModifierName);
-        Assert.IsType<SingleTargetSelector>(actionData.Target);
-        Assert.Equal(TargetType.Target, ((SingleTargetSelector)actionData.Target).Type);
+        Assert.Equal("mod_apply_test", actionData.ModifierName);
+        var selector = Assert.IsType<SingleTargetSelector>(actionData.Target);
+        Assert.Equal(TargetType.Target, selector.Type);
     }
 
     // ─── 3. 事件触发端到端 ─────────────────────────────────────
@@ -138,103 +109,82 @@ public class AbilityEventActionTests
     [Fact]
     public void Execute_ApplyModifier_AddsModifierToTarget()
     {
-        var modData = new ModifierData { Name = "mod_apply_test", IsBuff = true };
-        var abilityData = new AbilityData
-        {
-            Name = "apply_test",
-            AbilityModifiers = new Dictionary<string, ModifierData> { [modData.Name] = modData },
-        };
-        var actionData = new ApplyModifierActionData
-        {
-            Target = new SingleTargetSelector { Type = TargetType.Target },
-            ModifierName = modData.Name,
-        };
-
-        var action = AbilityEventAction.Create(actionData);
+        var abilityData = LoadAbility("test_apply_modifier.json");
         var (caster, target) = MakeUnits();
         var ability = MakeAbility(abilityData, caster);
 
-        action.Execute(MakeContext(ability, caster, target));
+        ability.OnSpellStart(MakeContext(ability, caster, target));
 
-        Assert.True(target.ModifierManager.Has(modData.Name));
+        Assert.True(target.ModifierManager.Has("mod_apply_test"));
     }
 
     [Fact]
     public void Execute_RemoveModifier_RemovesModifierFromTarget()
     {
-        var modData = new ModifierData { Name = "mod_remove_test", IsBuff = true };
-        var abilityData = new AbilityData
-        {
-            Name = "remove_test",
-            AbilityModifiers = new Dictionary<string, ModifierData> { [modData.Name] = modData },
-        };
-
+        var abilityData = LoadAbility("test_remove_modifier.json");
         var (caster, target) = MakeUnits();
         var ability = MakeAbility(abilityData, caster);
 
         // 先手动加上 modifier
+        var modData = abilityData.AbilityModifiers["mod_remove_test"];
         target.ModifierManager.Add(modData, caster, ability);
-        target.ModifierManager.Update(0f); // flush pending
-        Assert.True(target.ModifierManager.Has(modData.Name));
+        target.ModifierManager.Update(0f);
+        Assert.True(target.ModifierManager.Has("mod_remove_test"));
 
-        var actionData = new RemoveModifierActionData
-        {
-            Target = new SingleTargetSelector { Type = TargetType.Target },
-            ModifierName = modData.Name,
-        };
-        var action = AbilityEventAction.Create(actionData);
-        action.Execute(MakeContext(ability, caster, target));
+        // OnSpellStart 触发 RemoveModifierAction
+        ability.OnSpellStart(MakeContext(ability, caster, target));
 
-        Assert.False(target.ModifierManager.Has(modData.Name));
+        Assert.False(target.ModifierManager.Has("mod_remove_test"));
+    }
+
+    [Fact]
+    public void Execute_DamageAction_ReducesTargetHp()
+    {
+        // 目标初始 1000 HP，施放 100 固定伤害（无暴击/无元素乘区），验证 HP 下降
+        var abilityData = LoadAbility("test_damage_single_target.json");
+        var (caster, target) = MakeUnits();
+        target.Stats.Set("HP", 1000f);
+
+        var ability = MakeAbility(abilityData, caster);
+        ability.OnSpellStart(MakeContext(ability, caster, target));
+
+        var hpAfter = target.GetStat("HP");
+        Assert.True(hpAfter < 1000f, $"HP 应该降低，实际为 {hpAfter}");
+        // 无暴击（CritRate=0）、无乘区（抗性/加成均为0）：finalDamage == 100
+        Assert.Equal(900f, hpAfter, precision: 1);
     }
 
     [Fact]
     public void Execute_ApplyModifier_StackCount_DecrementOnRemove()
     {
-        var modData = new ModifierData
-        {
-            Name = "mod_stack_test",
-            IsBuff = true,
-            StackMode = ModifierStackMode.StackCount,
-        };
-        var abilityData = new AbilityData
-        {
-            Name = "stack_test",
-            AbilityModifiers = new Dictionary<string, ModifierData> { [modData.Name] = modData },
-        };
-
+        var abilityData = LoadAbility("test_stack_modifier.json");
         var (caster, target) = MakeUnits();
         var ability = MakeAbility(abilityData, caster);
 
-        // 加 3 层
-        var applyData = new ApplyModifierActionData
-        {
-            Target = new SingleTargetSelector { Type = TargetType.Target },
-            ModifierName = modData.Name,
-        };
-        var applyAction = AbilityEventAction.Create(applyData);
+        // OnAbilityPhaseStart 执行 ApplyModifierAction（StackCount 模式堆叠 3 次）
         for (int i = 0; i < 3; i++)
-            applyAction.Execute(MakeContext(ability, caster, target));
+            ability.OnAbilityPhaseStart(MakeContext(ability, caster, target));
 
         target.ModifierManager.Update(0f);
-        var spec = target.ModifierManager.Find(modData.Name);
+        var spec = target.ModifierManager.Find("mod_stack_test");
         Assert.NotNull(spec);
         Assert.Equal(3, spec.StackCount);
 
-        // 减一层
-        var removeData = new RemoveModifierActionData
-        {
-            Target = new SingleTargetSelector { Type = TargetType.Target },
-            ModifierName = modData.Name,
-        };
-        var removeAction = AbilityEventAction.Create(removeData);
-        removeAction.Execute(MakeContext(ability, caster, target));
+        // OnSpellStart 执行 RemoveModifierAction（减一层）
+        ability.OnSpellStart(MakeContext(ability, caster, target));
 
         Assert.Equal(2, spec.StackCount);
-        Assert.True(target.ModifierManager.Has(modData.Name)); // 仍然存在
+        Assert.True(target.ModifierManager.Has("mod_stack_test"));
     }
 
     // ─── 工具方法 ─────────────────────────────────────────────
+
+    private static AbilityData LoadAbility(string fileName)
+    {
+        var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fixtures", "abilities", fileName);
+        var json = File.ReadAllText(path);
+        return JsonConvert.DeserializeObject<AbilityData>(json, AbilityJsonSettings.Instance)!;
+    }
 
     private static (UnitEntity caster, UnitEntity target) MakeUnits()
     {
@@ -244,7 +194,12 @@ public class AbilityEventActionTests
     }
 
     private static AbilitySpec MakeAbility(AbilityData data, UnitEntity owner)
-        => new AbilitySpec { data = data, Owner = owner, Level = 1 };
+    {
+        var ability = AbilitySpec.Create(data);
+        ability.Owner = owner;
+        ability.Level = 1;
+        return ability;
+    }
 
     private static AbilityEventContext MakeContext(AbilitySpec ability, UnitEntity caster, UnitEntity target)
         => new AbilityEventContext { Ability = ability, Caster = caster, Target = target };

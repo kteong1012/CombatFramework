@@ -17,11 +17,39 @@ public class UnitAbilitySlot
     public void Equip(AbilitySpec ability)
     {
         if (_abilities.Any(a => a.Name == ability.Name)) return;
+        ability.Owner    = _owner;
+        ability.SlotIndex = _abilities.Count;
         _abilities.Add(ability);
+        ability.OnEquipped(_owner);
+    }
+
+    /// <summary>
+    /// 用 newAbility 替换指定槽位的当前技能。
+    /// 旧技能触发 OnUnequipped，新技能触发 OnEquipped。
+    /// </summary>
+    public bool Replace(int slotIndex, AbilitySpec newAbility)
+    {
+        if (slotIndex < 0 || slotIndex >= _abilities.Count) return false;
+        var old = _abilities[slotIndex];
+        old.OnUnequipped(_owner);
+        old.Owner     = null;
+        old.SlotIndex = -1;
+
+        newAbility.Owner     = _owner;
+        newAbility.SlotIndex = slotIndex;
+        _abilities[slotIndex] = newAbility;
+        newAbility.OnEquipped(_owner);
+        return true;
     }
 
     public void Unequip(string abilityName)
     {
+        var ability = Get(abilityName);
+        if (ability != null)
+        {
+            ability.OnUnequipped(_owner);
+            ability.Owner = null;
+        }
         _abilities.RemoveAll(a => a.Name == abilityName);
     }
 
