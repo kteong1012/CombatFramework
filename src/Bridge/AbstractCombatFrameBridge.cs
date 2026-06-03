@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
+using CombatFramework.Damage;
 
 namespace CombatFramework.Bridge
 {
@@ -14,6 +15,12 @@ namespace CombatFramework.Bridge
         public IElementProvider ElementProvider { get; }
         public IMethodProvider MethodProvider { get; }
         public ITypeProvider TypeProvider { get; }
+
+        /// <summary>
+        /// 伤害公式实例。游戏侧实现 <see cref="IBattleFormula"/> 并在 Bridge 构造函数中赋值，
+        /// 可按 attacker/victim 类型走完全不同的数值流程。
+        /// </summary>
+        public IBattleFormula Formula { get; protected set; } = new DefaultBattleFormula();
 
         protected AbstractCombatFrameworkBridge()
         {

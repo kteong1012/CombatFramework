@@ -2,6 +2,7 @@ using Godot;
 using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability;
+using CombatFramework.Core.Enums;
 using CombatFramework.Core.Model;
 using CombatFramework.Unit;
 using Newtonsoft.Json;
@@ -28,11 +29,6 @@ public partial class BattleScene : Node2D
     private const float MaxHp    = 1000f;
     private const float EnemyHp  = 600f;
     private const float MaxEnergy = 100f;
-
-    // 技能槽：0=被动, 1=普攻, 2=AOE, 3=吸血
-    private const int SlotAttack = 1;
-    private const int SlotAoe    = 2;
-    private const int SlotDrain  = 3;
 
     // HUD 动态节点
     private ColorRect   _hpFill;
@@ -68,10 +64,10 @@ public partial class BattleScene : Node2D
         CFServices.ShapeQuery = new GodotShapeQueryService(allUnits);
 
         // ── 技能装备 ──────────────────────────────────────
-        _player.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
-        _player.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
-        _player.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("skill_aoe.json")));
-        _player.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("skill_drain.json")));
+        _player.AbilitySlots.Equip(SlotType.Passive0,  AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
+        _player.AbilitySlots.Equip(SlotType.NormalAtk, AbilitySpec.Create(LoadAbility("test_active_attack.json")));
+        _player.AbilitySlots.Equip(SlotType.Skill,     AbilitySpec.Create(LoadAbility("skill_aoe.json")));
+        _player.AbilitySlots.Equip(SlotType.Burst,     AbilitySpec.Create(LoadAbility("skill_drain.json")));
 
         // ── 绑定 Node ──────────────────────────────────────
         _playerNode = GetNode<UnitNode>("PlayerUnit");
@@ -105,14 +101,14 @@ public partial class BattleScene : Node2D
 
         switch (key.Keycode)
         {
-            case Key.Z: CastSkill(SlotAttack, target, "普攻"); break;
-            case Key.X: CastSkill(SlotAoe,    target, "AOE");  break;
-            case Key.C: CastSkill(SlotDrain,  target, "吸血"); break;
+            case Key.Z: CastSkill(SlotType.NormalAtk, target, "普攻"); break;
+            case Key.X: CastSkill(SlotType.Skill,     target, "AOE");  break;
+            case Key.C: CastSkill(SlotType.Burst,     target, "吸血"); break;
             case Key.R: ResetBattle(); break;
         }
     }
 
-    private void CastSkill(int slot, UnitEntity target, string skillName)
+    private void CastSkill(SlotType slot, UnitEntity target, string skillName)
     {
         float energyBefore = _player.GetStat("Energy");
         float playerHpBefore = _player.GetStat("HP");

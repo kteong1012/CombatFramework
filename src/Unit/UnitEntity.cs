@@ -3,6 +3,7 @@ using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
+using CombatFramework.Core.Enums;
 using CombatFramework.Core.Modifier;
 using CombatFramework.Core.Stat;
 
@@ -47,20 +48,31 @@ public class UnitEntity
     public bool HasTag(string tag) => Tags.HasTag(tag);
     public float GetStat(string statId) => Stats.Get(statId);
 
+    /// <summary>TryCast 的 SlotType 枚举重载，等价于 TryCast((int)slotType, target)。</summary>
+    public bool TryCast(SlotType slotType, UnitEntity target = null)
+        => TryCast((int)slotType, target);
+
     /// <summary>
-    /// 尝试施放指定槽位的技能。
-    /// 流程：检查 cost → 扣除资源 → 委托 Bridge 执行技能流程（如 Timeline）。
-    /// Bridge 负责在适当时机（前摇结束）触发 OnAbilityPhaseStart / OnSpellStart。
-    /// 测试环境下 Bridge 可直接依次触发这两个事件。
+    /// 尝试施放指定槽位的技能。先评估 Transforms，再对最终技能执行 CanCast + DeductCosts。
     /// </summary>
-    /// <param name="slotIndex">槽位下标（0-based）。预留枚举重载，当前以 int 为主。</param>
-    /// <param name="target">技能目标，可为 null。</param>
-    /// <returns>true = 已交由 Bridge 执行；false = 槽位无效或 cost 不足。</returns>
     public bool TryCast(int slotIndex, UnitEntity target = null)
     {
         var ability = AbilitySlots.GetByIndex(slotIndex);
-        if (ability == null) return false;
-        if (!ability.CanCast(out _)) return false;
+        return ability != null && TryCast(ability, target);
+    }
+
+    /// <summary>
+    /// 对指定 AbilitySpec 递归执行转换链，然后施放最终技能。
+    /// 每一步转换结果继续尝试转换（可用于多级条件分支），直到无匹配为止。
+    /// </summary>
+    public bool TryCast(AbilitySpec ability, UnitEntity target = null)
+    {
+        // 按顺序尝试所有满足条件的转换，任一成功即返回
+        foreach (var transformed in ability.GetMatchingTransforms(this, target))
+        {
+            if (TryCast(transformed, target))
+                return true;
+        }
 
         ability.DeductCosts();
 

@@ -44,6 +44,28 @@ public class AbilitySpec
     #endregion
 
     #region Public Methods
+    /// <summary>
+    /// 计算技能的有效等级：BaseLevel + 来自所有命座/被动槽 SkillBonusEntries 的汇总加成。
+    /// 只在求值时汇总，不修改 <see cref="Level"/>，避免状态污染。
+    /// </summary>
+    public int GetEffectiveLevel()
+    {
+        int bonus = 0;
+        if (Owner != null && data?.Tags != null && data.Tags.Count > 0)
+        {
+            foreach (var other in Owner.AbilitySlots.All)
+            {
+                if (other == this) continue;
+                var entries = other.data?.SkillBonusEntries;
+                if (entries == null) continue;
+                foreach (var entry in entries)
+                    if (data.Tags.Contains(entry.TargetFlag))
+                        bonus += entry.LevelBonus;
+            }
+        }
+        return Level + bonus;
+    }
+
     public bool TryGetLevelValue(string name, out float value)
     {
         if (Level == 0)
@@ -71,6 +93,41 @@ public class AbilitySpec
     #endregion
 
     #region Cast — 施放检查与资源扣除
+
+    /// <summary>
+    /// 按顺序枚举所有条件满足的转换目标 spec。
+    /// 由 <see cref="Unit.UnitEntity.TryCast(AbilitySpec,Unit.UnitEntity)"/> 逐个尝试施放。
+    /// </summary>
+    public IEnumerable<AbilitySpec> GetMatchingTransforms(UnitEntity caster, UnitEntity target)
+    {
+        if (data?.Transforms == null) yield break;
+        foreach (var t in data.Transforms)
+        {
+            if (t.Condition == null || t.Condition.Evaluate(this, caster, target))
+            {
+                var spec = GetOrCreateSubSpec(t.To);
+                if (spec != null) yield return spec;
+            }
+        }
+    }
+
+    // 子技能 spec 按需创建并缓存（每个 AbilitySpec 实例各自持有，避免跨实例污染）
+    private Dictionary<string, AbilitySpec> _subSpecs;
+
+    private AbilitySpec GetOrCreateSubSpec(string key)
+    {
+        if (string.IsNullOrEmpty(key) || data?.SubAbilities == null) return null;
+        _subSpecs ??= new Dictionary<string, AbilitySpec>();
+        if (!_subSpecs.TryGetValue(key, out var spec))
+        {
+            if (!data.SubAbilities.TryGetValue(key, out var subData)) return null;
+            spec = Create(subData);
+            spec.Owner = Owner;
+            spec.Level = Level;
+            _subSpecs[key] = spec;
+        }
+        return spec;
+    }
 
     /// <summary>
     /// 检查是否可以施放：逐项对比 AbilityCosts 与 Owner 当前属性值。
