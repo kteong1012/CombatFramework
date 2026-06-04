@@ -1,0 +1,44 @@
+{
+    "Name": "radiance_aura",
+    "AbilityModifiers": {
+        "radiance_aura": {
+            "Name": "radiance_aura",
+            "StackMode": "Permanent",
+            "IsHidden": true,
+            "EffectName": "aura_range",
+            "ThinkInterval": 0.1,
+            "Events": {
+                "OnIntervalThink": [
+                    {
+                        "$type": "ApplyModifierActionData",
+                        "Target": {
+                            "$type": "AreaTargetSelector",
+                            "Center": "Caster",
+                            "Radius": 200.0,
+                            "Teams": "Enemy"
+                        },
+                        "ModifierName": "radiance_burn"
+                    }
+                ]
+            }
+        },
+        "radiance_burn": {
+            "Name": "radiance_burn",
+            "DurationGetter": { "$type": "const", "Value": 0.1 },
+            "IsDebuff": true,
+            "IsHidden": true,
+            "ThinkInterval": 0.1,
+            "Events": {
+                "OnIntervalThink": [
+                    {
+                        "$type": "DamageActionData",
+                        "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                        "Element": "FIRE",
+                        "Damage": { "$type": "const", "Value": 1.0 },
+                        "Teams": "All"
+                    }
+                ]
+            }
+        }
+    }
+}

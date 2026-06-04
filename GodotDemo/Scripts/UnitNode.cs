@@ -114,6 +114,13 @@ public partial class UnitNode : Node2D
         DrawCircle(Godot.Vector2.Zero, 32f, bodyColor);
         DrawArc(Godot.Vector2.Zero, 32f, 0f, Mathf.Tau, 48, Colors.White, 2f);
 
+        // ── 光环范围特效 ──
+        if (_activeVfx.Contains("aura_range"))
+        {
+            DrawCircle(Godot.Vector2.Zero, 200f, new Color(1f, 0.3f, 0.1f, 0.08f));
+            DrawArc(Godot.Vector2.Zero, 200f, 0f, Mathf.Tau, 72, new Color(1f, 0.4f, 0.15f, 0.35f), 1.5f);
+        }
+
         // ── 自动特效：有 VFX 标记时金色脉冲环（由 modifier.EffectName 驱动）──
         if (_activeVfx.Count > 0 && !dead)
         {

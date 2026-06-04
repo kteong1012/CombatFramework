@@ -100,6 +100,19 @@ public partial class BattleScene : Node2D
             _enemyNodes.Add(node);
         }
 
+        // ── 给敌人挂辉耀光环：每秒对 200 半径内敌方施加 radiance_burn ──
+        // burn 用 StackMode:None，先来的敌人拥有 debuff 所有权
+        var radianceData = LoadAbility("radiance_aura.json");
+        if (radianceData?.AbilityModifiers?.TryGetValue("radiance_aura", out var auraMod) == true)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                var spec = AbilitySpec.Create(radianceData);
+                _enemies[i].AbilitySlots.Equip(SlotType.Const0, spec);
+                _enemies[i].ModifierManager.Add(auraMod, _enemies[i], spec);
+            }
+        }
+
         _logLabel    = GetNode<Label>("UI/Log");
 
         BuildHud();
