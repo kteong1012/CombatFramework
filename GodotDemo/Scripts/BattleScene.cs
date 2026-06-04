@@ -19,6 +19,7 @@ public partial class BattleScene : Node2D
     private readonly List<UnitNode> _enemyNodes = new();
     private HUD _hud;
     private TrainingPanel _trainingPanel;
+    private CharacterPanel _charPanel;
     private ConstellationManager _constellation;
     private DamageTracker _damageTracker = new();
 
@@ -40,7 +41,7 @@ public partial class BattleScene : Node2D
         InitNodes();
         InitHud();
 
-        _hud.Log($"训练场就绪  ATK={_player.GetStat("Atk"):F0}  [{_playerCfg?.Name}]  [Z]普攻 [X]AOE [C]充能 [1~6]命座 [WASD]移动 [R]重置 [T]清Log");
+        _hud.Log($"训练场就绪  ATK={_player.GetStat("Atk"):F0}  [{_playerCfg?.Name}]  [Z]普攻 [X]AOE [C]充能 [1~6]命座 [P]角色 [WASD]移动 [R]重置 [T]清Log");
     }
 
     // ════════════════════════════════════════════════════════
@@ -129,6 +130,9 @@ public partial class BattleScene : Node2D
         _trainingPanel = GetNode<TrainingPanel>("UI/TrainingPanel");
         _trainingPanel.OnResetEnemy += ResetEnemies;
         _trainingPanel.OnResetStats += () => _damageTracker.Reset();
+
+        _charPanel = GetNode<CharacterPanel>("UI/CharacterPanel");
+        _charPanel.Init(_player, _playerCfg, _constellation);
     }
 
     // ════════════════════════════════════════════════════════
@@ -164,6 +168,7 @@ public partial class BattleScene : Node2D
             case Key.Key6:   UnlockConstellation(6);                    break;
             case Key.R:      ResetBattle();                              break;
             case Key.T:      _hud.ClearLog();                            break;
+            case Key.P:      _charPanel?.Toggle();                       break;
         }
     }
 
