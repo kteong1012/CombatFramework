@@ -72,17 +72,17 @@ public partial class BattleScene : Node2D
         shapeSvc.OnShowCirclePreview = HandleCirclePreview;
 
         // ── 技能装备 ──────────────────────────────────────
-        _player.AbilitySlots.Equip(SlotType.Passive0,  AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
-        _player.AbilitySlots.Equip(SlotType.NormalAtk, AbilitySpec.Create(LoadAbility("normal_attack_01.json")));
-        _player.AbilitySlots.Equip(SlotType.Skill,     AbilitySpec.Create(LoadAbility("skill_aoe.json")));
-        _player.AbilitySlots.Equip(SlotType.Burst,     AbilitySpec.Create(LoadAbility("skill_charge.json")));
+        _player.AbilitySlots.Equip(SlotType.Passive0,  EquipAbility("test_passive_atk_bonus.json"));
+        _player.AbilitySlots.Equip(SlotType.NormalAtk, EquipAbility("normal_attack_01.json"));
+        _player.AbilitySlots.Equip(SlotType.Skill,     EquipAbility("skill_aoe.json"));
+        _player.AbilitySlots.Equip(SlotType.Burst,     EquipAbility("skill_charge.json"));
         // 连击后续段——不可见槽位，仅通过 Transform 按名查找
-        _player.AbilitySlots.Equip(SlotType.Const0,    AbilitySpec.Create(LoadAbility("normal_attack_02.json")));
-        _player.AbilitySlots.Equip(SlotType.Const1,    AbilitySpec.Create(LoadAbility("normal_attack_03.json")));
+        _player.AbilitySlots.Equip(SlotType.Const0,    EquipAbility("normal_attack_02.json"));
+        _player.AbilitySlots.Equip(SlotType.Const1,    EquipAbility("normal_attack_03.json"));
         // 强化普攻——不可见槽位，通过 ExPoint transform 按名查找
-        _player.AbilitySlots.Equip(SlotType.Const2,    AbilitySpec.Create(LoadAbility("normal_attack_01_ex.json")));
-        _player.AbilitySlots.Equip(SlotType.Const3,    AbilitySpec.Create(LoadAbility("normal_attack_02_ex.json")));
-        _player.AbilitySlots.Equip(SlotType.Const4,    AbilitySpec.Create(LoadAbility("normal_attack_03_ex.json")));
+        _player.AbilitySlots.Equip(SlotType.Const2,    EquipAbility("normal_attack_01_ex.json"));
+        _player.AbilitySlots.Equip(SlotType.Const3,    EquipAbility("normal_attack_02_ex.json"));
+        _player.AbilitySlots.Equip(SlotType.Const4,    EquipAbility("normal_attack_03_ex.json"));
 
         // ── 绑定 Node ──────────────────────────────────────
         _playerNode = GetNode<UnitNode>("PlayerUnit");
@@ -99,9 +99,12 @@ public partial class BattleScene : Node2D
             _enemies[i].Position = new System.Numerics.Vector3(node.Position.X, node.Position.Y, 0f);
             _enemyNodes.Add(node);
 
-            // 前两个敌人装备辉耀光环
+            // 前两个敌人装备辉耀光环（第二个级别更高，范围更大）
             if (i < 2)
-                _enemies[i].AbilitySlots.Equip(SlotType.Const0, AbilitySpec.Create(LoadAbility("radiance_aura.json")));
+            {
+                var radianceLevel = i + 1;
+                _enemies[i].AbilitySlots.Equip(SlotType.Const0, EquipAbility("radiance_aura.json", radianceLevel));
+            }
         }
 
         _logLabel    = GetNode<Label>("UI/Log");
@@ -388,11 +391,20 @@ public partial class BattleScene : Node2D
         return lbl;
     }
 
-    private static AbilityData LoadAbility(string fileName)
+    private static AbilityData LoadAbilityData(string fileName)
     {
         var path = Path.Combine(ProjectSettings.GlobalizePath("res://Abilities"), fileName);
         return JsonConvert.DeserializeObject<AbilityData>(
             File.ReadAllText(path), AbilityJsonSettings.Instance);
+    }
+
+    private static AbilitySpec EquipAbility(string fileName, int level = 1)
+    {
+        var data = LoadAbilityData(fileName);
+        var spec = AbilitySpec.Create(data);
+        for (int i = 0; i < level; i++)
+            spec.LevelUp();
+        return spec;
     }
 }
 

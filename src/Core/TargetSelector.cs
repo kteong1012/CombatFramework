@@ -1,6 +1,8 @@
 using CombatFramework.Bridge;
+using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Core.Enums;
+using CombatFramework.Core.Executor.ValueGetter;
 using CombatFramework.Unit;
 using System.Numerics;
 
@@ -34,11 +36,11 @@ public class SingleTargetSelector : TargetSelector
     }
 }
 
-/// <summary>范围目标：以 Center 为圆心，Radius 半径，按 Teams 过滤。</summary>
+/// <summary>范围目标：以 Center 为圆心，Radius 半径，按 Teams 过滤。Radius 支持 valueGetter。</summary>
 public class AreaTargetSelector : TargetSelector
 {
     public TargetType Center { get; set; } = TargetType.Caster;
-    public float Radius { get; set; }
+    public IAbilityValueGetter Radius { get; set; }
     public TeamFilter Teams { get; set; } = TeamFilter.All;
 
     public override IEnumerable<UnitEntity> Resolve(AbilityEventContext context)
@@ -55,8 +57,12 @@ public class AreaTargetSelector : TargetSelector
         };
 
         var self = Center == TargetType.Target ? context.Target : context.Caster;
-        return service.QueryUnitsInRadius(origin, Radius, Teams, self);
+        var radius = Radius?.GetValue(context.Ability) ?? 0f;
+        return service.QueryUnitsInRadius(origin, radius, Teams, self);
     }
+
+    /// <summary>解析半径值（用于预览等非 Resolve 场景）。</summary>
+    public float GetRadius(AbilitySpec ability) => Radius?.GetValue(ability) ?? 0f;
 }
 
 /// <summary>盒形范围目标：以 Center 为原点，按 offset/eulerRotation/size 描述盒形，按 Teams 过滤。</summary>

@@ -1,6 +1,27 @@
 {
     "Name": "radiance_aura",
 
+    "AbilitySpecialFields": {
+        "damage" : [
+            1,
+            2,
+            3,
+            4
+        ],
+        "radius": [
+            200,
+            300,
+            400,
+            500
+        ],
+        "effect_scale": [
+            1,
+            1.5,
+            2,
+            2.5
+        ]
+    },
+
     "AbilityEvents": {
         "OnEquipped": [
             {
@@ -24,6 +45,7 @@
             "StackMode": "Permanent",
             "IsHidden": true,
             "EffectName": "aura_range",
+            "EffectScale": { "$type": "special", "Name": "effect_scale" },
             "ThinkInterval": 0.1,
             "Events": {
                 "OnIntervalThink": [
@@ -32,7 +54,7 @@
                         "Target": {
                             "$type": "AreaTargetSelector",
                             "Center": "Caster",
-                            "Radius": 200.0,
+                            "Radius": { "$type": "special", "Name": "radius" },
                             "Teams": "Enemy"
                         },
                         "ModifierName": "radiance_burn"
@@ -52,7 +74,7 @@
                         "$type": "DamageActionData",
                         "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
                         "Element": "FIRE",
-                        "Damage": { "$type": "const", "Value": 1.0 },
+                        "Damage": { "$type": "special", "Name": "damage" },
                         "Teams": "All"
                     }
                 ]

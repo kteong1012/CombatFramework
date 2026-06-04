@@ -26,6 +26,9 @@ public class ModifierData
     /// <summary>自动特效名。非空时 OnCreated 自动调用 Vfx.PlayOnUnit，OnDestroy 自动调用 StopOnUnit。</summary>
     public string EffectName { get; set; }
 
+    /// <summary>特效缩放。传入 Vfx.PlayOnUnit 的 scale 参数。null 时默认 1.0。</summary>
+    public IAbilityValueGetter EffectScale { get; set; }
+
     /// <summary>OnIntervalThink 触发间隔（秒）。0 表示不启用间隔触发。</summary>
     public float ThinkInterval { get; set; }
 

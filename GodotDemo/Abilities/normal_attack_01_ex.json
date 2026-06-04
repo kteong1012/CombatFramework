@@ -22,7 +22,7 @@
                 "Target": {
                     "$type": "AreaTargetSelector",
                     "Center": "Caster",
-                    "Radius": 140.0,
+                    "Radius": { "$type": "const", "Value": 140.0 },
                     "Teams": "All"
                 }
             },

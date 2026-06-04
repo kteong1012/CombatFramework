@@ -1,4 +1,5 @@
 using CombatFramework.Bridge;
+using CombatFramework.Core;
 using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Core.Executor.ValueGetter;
@@ -151,7 +152,8 @@ public class ModifierSpec
     private void PlayEffect()
     {
         if (string.IsNullOrEmpty(Data.EffectName)) return;
-        CFBridge.Bridge.Vfx?.PlayOnUnit(Data.EffectName, Parent);
+        var scale = Data.EffectScale?.GetValue(SourceAbility) ?? 1f;
+        CFBridge.Bridge.Vfx?.PlayOnUnit(Data.EffectName, Parent, scale);
     }
 
     private void StopEffect()

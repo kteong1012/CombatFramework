@@ -11,9 +11,16 @@ public class AbilitySpec
     public AbilityData data;
     public string Name => data?.Name;
     public UnitEntity Owner { get; set; }
-    public int Level { get; set; } = 0;
+    public int Level { get; private set; } = 0;
     /// <summary>当前所在槽位下标（0-based）。由 UnitAbilitySlot.Equip/Replace 维护。</summary>
     public int SlotIndex { get; internal set; } = -1;
+
+    /// <summary>提升技能等级并触发 OnUpgrade 事件。</summary>
+    public void LevelUp()
+    {
+        Level++;
+        OnUpgrade(new AbilityEventContext { Ability = this, Caster = Owner });
+    }
     #endregion
 
     #region Factory

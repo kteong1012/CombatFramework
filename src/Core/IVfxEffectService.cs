@@ -6,8 +6,8 @@ namespace CombatFramework.Core;
 /// </summary>
 public interface IVfxEffectService
 {
-    /// <summary>在 unit 上播放命名特效。由 modifier.OnCreated 自动调用。</summary>
-    void PlayOnUnit(string effectName, Unit.UnitEntity target);
+    /// <summary>在 unit 上播放命名特效。由 modifier.OnCreated 自动调用。scale 默认 1.0。</summary>
+    void PlayOnUnit(string effectName, Unit.UnitEntity target, float scale = 1f);
 
     /// <summary>停止 unit 上的命名特效。由 modifier.OnDestroy 自动调用。</summary>
     void StopOnUnit(string effectName, Unit.UnitEntity target);

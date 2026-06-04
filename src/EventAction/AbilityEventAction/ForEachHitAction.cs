@@ -53,10 +53,11 @@ public class ForEachHitAction : AbilityEventAction
                 break;
 
             case AreaTargetSelector area:
-                CFLog.Info($"[Preview] Circle: radius={area.Radius}");
-                if (area.Radius >= 5000f) { CFLog.Info("[Preview] skipped (fullscreen)"); return; }
+                var r = area.GetRadius(context.Ability);
+                CFLog.Info($"[Preview] Circle: radius={r}");
+                if (r >= 5000f) { CFLog.Info("[Preview] skipped (fullscreen)"); return; }
                 shapeQuery.ShowCirclePreview(
-                    GetSelectorCenter(area.Center, context), area.Radius);
+                    GetSelectorCenter(area.Center, context), r);
                 break;
 
             default:

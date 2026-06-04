@@ -22,13 +22,14 @@ namespace CombatFramework.Core.Executor.ValueGetter
 
         public float GetValue(AbilitySpec context)
         {
+            if (context == null) return 0f;
             if (context.TryGetLevelValue(_name, out var value))
             {
                 return value;
             }
             else
             {
-                CFLog.Warning($"AbilitySpecial {_name} not found in ability {context.data.Name}, return 0");
+                CFLog.Warning($"AbilitySpecial {_name} not found in ability {context.data?.Name}, return 0");
                 return 0f;
             }
         }

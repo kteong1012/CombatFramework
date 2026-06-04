@@ -7,7 +7,7 @@
                 "Target": {
                     "$type": "AreaTargetSelector",
                     "Center": "Caster",
-                    "Radius": 300.0,
+                    "Radius": { "$type": "const", "Value": 300.0 },
                     "Teams": "Enemy"
                 },
                 "Element": "FIRE",

@@ -13,10 +13,10 @@ public class GodotVfxService : IVfxEffectService
 
     public void Register(UnitEntity entity, UnitNode node) => _nodeMap[entity] = node;
 
-    public void PlayOnUnit(string effectName, UnitEntity target)
+    public void PlayOnUnit(string effectName, CombatFramework.Unit.UnitEntity target, float scale = 1f)
     {
         if (_nodeMap.TryGetValue(target, out var node))
-            node.AddVfx(effectName);
+            node.AddVfx(effectName, scale);
     }
 
     public void StopOnUnit(string effectName, UnitEntity target)

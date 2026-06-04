@@ -24,9 +24,14 @@ public partial class UnitNode : Node2D
 
     // ── VFX 标记（由 GodotVfxService 管理）────────────────
     private readonly HashSet<string> _activeVfx = new();
+    private readonly Dictionary<string, float> _vfxScales = new();
 
-    public void AddVfx(string name)   { _activeVfx.Add(name); }
-    public void RemoveVfx(string name) { _activeVfx.Remove(name); }
+    public void AddVfx(string name, float scale = 1f)
+    {
+        _activeVfx.Add(name);
+        _vfxScales[name] = scale;
+    }
+    public void RemoveVfx(string name) { _activeVfx.Remove(name); _vfxScales.Remove(name); }
 
     /// <summary>显示盒形技能范围预览，0.3 秒后自动消失。</summary>
     public void ShowSkillBoxPreview(Godot.Vector2 offset, Godot.Vector2 size)
@@ -117,8 +122,9 @@ public partial class UnitNode : Node2D
         // ── 光环范围特效 ──
         if (_activeVfx.Contains("aura_range"))
         {
-            DrawCircle(Godot.Vector2.Zero, 200f, new Color(1f, 0.3f, 0.1f, 0.08f));
-            DrawArc(Godot.Vector2.Zero, 200f, 0f, Mathf.Tau, 72, new Color(1f, 0.4f, 0.15f, 0.35f), 1.5f);
+            float r = 200f * (_vfxScales.TryGetValue("aura_range", out var s) ? s : 1f);
+            DrawCircle(Godot.Vector2.Zero, r, new Color(1f, 0.3f, 0.1f, 0.08f));
+            DrawArc(Godot.Vector2.Zero, r, 0f, Mathf.Tau, 72, new Color(1f, 0.4f, 0.15f, 0.35f), 1.5f);
         }
 
         // ── 自动特效：有 VFX 标记时金色脉冲环（由 modifier.EffectName 驱动）──

@@ -60,7 +60,8 @@ public class AbilityEventActionTests
         Assert.Equal("FIRE", action.Element);
         var area = Assert.IsType<AreaTargetSelector>(action.Target);
         Assert.Equal(TargetType.Caster, area.Center);
-        Assert.Equal(300f, area.Radius);
+        var radiusGetter = Assert.IsType<ConstantValueGetter>(area.Radius);
+        Assert.Equal(300f, radiusGetter.Value);
         Assert.Equal(TeamFilter.Enemy, area.Teams);
         var constGetter = Assert.IsType<ConstantValueGetter>(action.Damage);
         Assert.Equal(100f, constGetter.Value);
@@ -196,7 +197,7 @@ public class AbilityEventActionTests
     {
         var ability = AbilitySpec.Create(data);
         ability.Owner = owner;
-        ability.Level = 1;
+        ability.LevelUp();  // 默认升级到等级 1，确保能正确读取 AbilitySpecial 的值
         return ability;
     }
 
