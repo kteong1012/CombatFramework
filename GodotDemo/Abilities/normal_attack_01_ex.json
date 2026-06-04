@@ -4,6 +4,15 @@
         { "Stat": "Player1_ExPoint", "Value": { "$type": "const", "Value": 1.0 } }
     ],
 
+    "AbilityModifiers": {
+        "combo2_window": {
+            "Name": "combo2_window",
+            "DurationGetter": { "$type": "const", "Value": 0.8 },
+            "IsHidden": true,
+            "IsPurgable": false
+        }
+    },
+
     "AbilityEvents": {
         "OnSpellStart": [
             {
@@ -14,6 +23,11 @@
                     "Radius": 140.0,
                     "Teams": "All"
                 }
+            },
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "combo2_window"
             }
         ],
         "OnHitTarget": [

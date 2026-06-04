@@ -7,6 +7,11 @@
     "AbilityEvents": {
         "OnSpellStart": [
             {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "combo3_window"
+            },
+            {
                 "$type": "ForEachHitActionData",
                 "Target": {
                     "$type": "AreaTargetSelector",

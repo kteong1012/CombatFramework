@@ -10,4 +10,5 @@ packages/
 *.nupkg
 .DS_Store
 Thumbs.db
-.vscode/settings.json
+.vscode/
+GodotDemo/.godot/
