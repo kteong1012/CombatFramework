@@ -1,34 +1,42 @@
 using Godot;
-using System.Collections.Generic;
 using CombatFramework.Unit;
 
 /// <summary>
-/// 米哈游风格角色面板 — 属性/技能/命座星图。
-/// 按 P 键打开/关闭。
+/// 星铁风格角色面板 — 左侧页签（属性/技能/星魂）+ 右侧内容。
+/// 按 P 键打开/关闭，Tab 或点击切换页签。
 /// </summary>
 public partial class CharacterPanel : Control
 {
     private bool _visible;
+    private int _tab; // 0=属性 1=技能 2=星魂
     private UnitEntity _player;
     private UnitConfig _cfg;
     private ConstellationManager _constMgr;
 
-    // ── 命座六芒星布局（相对坐标，归一化到 0~1 再乘半径）──
-    private static readonly Vector2[] StarLayout =
+    private static readonly string[] TabLabels = { "属性", "技能", "星魂" };
+    private static readonly (string name, string id, bool pct)[] StatDefs =
     {
-        new(-0.30f, -0.15f),  // 1 — 左上
-        new(-0.30f,  0.15f),  // 2 — 左下
-        new( 0.00f, -0.50f),  // 3 — 顶部
-        new( 0.30f,  0.15f),  // 4 — 右下
-        new( 0.30f, -0.15f),  // 5 — 右上
-        new( 0.00f,  0.50f),  // 6 — 底部
+        ("生命值",   "HP",             false),
+        ("攻击力",   "Atk",            false),
+        ("防御力",   "DefFinal",       false),
+        ("暴击率",   "CritRate",       true),
+        ("暴击伤害", "CritDMG",        true),
+        ("破韧增伤", "BreakDmgBonus",  true),
     };
-
-    // ── 节点之间连线 ──
-    private static readonly (int a, int b)[] StarLines =
+    private static readonly (string name, string file, string key, Color color)[] SkillDefs =
     {
-        (0,1), (1,5), (5,3), (3,4), (4,2), (2,0),
-        (0,3), (3,2), (2,4), (4,5),
+        ("普攻·剑击",  "normal_attack_01", "Z", new Color(0.9f, 0.65f, 0.15f)),
+        ("战技·爆裂",  "skill_aoe",        "X", new Color(0.2f, 0.7f, 0.85f)),
+        ("充能·汇聚",  "skill_charge",     "C", new Color(0.6f, 0.3f, 0.9f)),
+    };
+    private static readonly Vector2[] StarPos =
+    {
+        new(-0.30f, -0.15f), new(-0.30f, 0.15f), new(0f, -0.50f),
+        new( 0.30f,  0.15f), new( 0.30f, -0.15f), new(0f, 0.50f),
+    };
+    private static readonly (int, int)[] StarEdges =
+    {
+        (0,1),(1,5),(5,3),(3,4),(4,2),(2,0), (0,3),(3,2),(2,4),(4,5),
     };
 
     public void Init(UnitEntity player, UnitConfig cfg, ConstellationManager constMgr)
@@ -38,209 +46,177 @@ public partial class CharacterPanel : Control
         _constMgr = constMgr;
     }
 
-    public void Toggle()
-    {
-        _visible = !_visible;
-        QueueRedraw();
-    }
+    public void Toggle() { _visible = !_visible; QueueRedraw(); }
+    public void NextTab() { _tab = (_tab + 1) % 3; QueueRedraw(); }
 
     public override void _Draw()
     {
         if (!_visible || _player == null) return;
 
-        float w = GetViewportRect().Size.X, h = GetViewportRect().Size.Y;
+        float W = GetViewportRect().Size.X, H = GetViewportRect().Size.Y;
 
-        // ── 全屏暗色遮罩 ──
-        DrawRect(new Rect2(Vector2.Zero, new Vector2(w, h)), new Color(0f, 0f, 0f, 0.78f));
+        // 遮罩
+        DrawRect(new Rect2(0, 0, W, H), new Color(0, 0, 0, 0.72f));
 
-        float panelX = w * 0.08f, panelY = h * 0.10f;
-        float panelW = w * 0.84f, panelH = h * 0.80f;
+        // 面板
+        float px = W * 0.06f, py = H * 0.08f, pw = W * 0.88f, ph = H * 0.84f;
+        DrawRect(new Rect2(px, py, pw, ph), new Color(0.06f, 0.07f, 0.12f, 0.96f));
+        DrawRect(new Rect2(px, py, pw, ph), new Color(0.35f, 0.5f, 0.75f, 0.25f), false, 2f);
 
-        // ── 面板背景 ──
-        DrawRect(new Rect2(panelX, panelY, panelW, panelH),
-            new Color(0.08f, 0.09f, 0.14f, 0.95f));
-        DrawRect(new Rect2(panelX, panelY, panelW, panelH),
-            new Color(0.4f, 0.55f, 0.8f, 0.3f), filled: false, width: 2f);
+        // === 顶部头像栏 ===
+        float topH = ph * 0.22f;
+        DrawRect(new Rect2(px, py, pw, topH), new Color(0.04f, 0.05f, 0.09f, 0.5f));
+        DrawLine(new Vector2(px, py + topH), new Vector2(px + pw, py + topH), new Color(0.3f, 0.4f, 0.6f, 0.3f));
 
-        // ── 标题栏 ──
-        float titleY = panelY + 20f;
-        float portraitCX = panelX + 60f, portraitCY = titleY + 50f;
-        float portraitR = 45f;
+        float portCX = px + topH * 0.45f, portCY = py + topH * 0.50f, portR = topH * 0.35f;
+        var body = new Color(_cfg?.BodyColor?[0] ?? 0.4f, _cfg?.BodyColor?[1] ?? 0.6f, _cfg?.BodyColor?[2] ?? 0.9f);
+        DrawCircle(new Vector2(portCX, portCY), portR + 3, new Color(0.25f, 0.3f, 0.45f, 0.5f));
+        DrawCircle(new Vector2(portCX, portCY), portR, body);
+        DrawArc(new Vector2(portCX, portCY), portR, 0, Mathf.Tau, 48, Colors.White, 2f);
 
-        // 角色头像圆形
-        var bodyCol = new Color(
-            _cfg?.BodyColor?[0] ?? 0.4f,
-            _cfg?.BodyColor?[1] ?? 0.6f,
-            _cfg?.BodyColor?[2] ?? 0.9f);
-        DrawCircle(new Vector2(portraitCX, portraitCY), portraitR + 3f, new Color(0.3f, 0.35f, 0.5f, 0.5f));
-        DrawCircle(new Vector2(portraitCX, portraitCY), portraitR, bodyCol);
-        DrawArc(new Vector2(portraitCX, portraitCY), portraitR, 0f, Mathf.Tau, 48, Colors.White, 2f);
+        float nameX = portCX + portR + 24f;
+        DrawString(ThemeDB.FallbackFont, new Vector2(nameX, portCY - 22f), _cfg?.Name ?? "???", fontSize: 26);
+        DrawString(ThemeDB.FallbackFont, new Vector2(nameX, portCY + 8f), $"Lv.{_player.Level}", fontSize: 15,
+            modulate: new Color(0.5f, 0.65f, 0.9f));
 
-        DrawString(ThemeDB.FallbackFont, new Vector2(panelX + 30f, titleY),
-            _cfg?.Name ?? "角色", fontSize: 28);
-        DrawString(ThemeDB.FallbackFont, new Vector2(panelX + 30f, titleY + 30f),
-            $"Lv.{_player.Level}", fontSize: 16, modulate: new Color(0.6f, 0.7f, 0.9f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(px + pw - 100f, py + 14f), "[P] 关闭", fontSize: 12,
+            modulate: new Color(0.45f, 0.45f, 0.55f));
 
-        // ── 关闭提示 ──
-        DrawString(ThemeDB.FallbackFont, new Vector2(panelX + panelW - 120f, titleY),
-            "[P] 关闭", fontSize: 14, modulate: new Color(0.5f, 0.5f, 0.6f));
+        // === 左侧页签栏 ===
+        float tabW = pw * 0.16f, tabX = px, tabY = py + topH;
+        float contentX = px + tabW + 10f, contentY = tabY + 10f;
+        float contentW = pw - tabW - 20f, contentH = ph - topH - 20f;
 
-        // ════════════════════════════════════════════════════════
-        // 左侧：属性面板
-        // ════════════════════════════════════════════════════════
-        float statsX = panelX + 30f, statsY = titleY + 70f;
-        DrawStats(statsX, statsY, panelW * 0.38f);
+        // 页签背景
+        DrawRect(new Rect2(tabX, tabY, tabW, ph - topH), new Color(0.04f, 0.05f, 0.09f, 0.4f));
 
-        // ════════════════════════════════════════════════════════
-        // 中右：技能列表
-        // ════════════════════════════════════════════════════════
-        float skillX = statsX + panelW * 0.32f, skillY = statsY;
-        DrawSkills(skillX, skillY, panelW * 0.30f);
+        for (int i = 0; i < 3; i++)
+        {
+            float ty = tabY + 20f + i * 52f;
+            bool active = _tab == i;
+            if (active)
+            {
+                DrawRect(new Rect2(tabX + 2, ty - 4f, tabW - 2, 44f), new Color(0.15f, 0.2f, 0.35f, 0.7f));
+                DrawRect(new Rect2(tabX + tabW - 3, ty - 4f, 3, 44f), new Color(0.4f, 0.65f, 0.9f));
+            }
+            DrawString(ThemeDB.FallbackFont, new Vector2(tabX + 22f, ty + 8f), TabLabels[i],
+                fontSize: 16, modulate: active ? new Color(0.85f, 0.9f, 1f) : new Color(0.4f, 0.45f, 0.55f));
+        }
 
-        // ════════════════════════════════════════════════════════
-        // 右侧：命座星图
-        // ════════════════════════════════════════════════════════
-        float starCX = panelX + panelW - panelW * 0.22f;
-        float starCY = panelY + panelH * 0.52f;
-        float starR = panelH * 0.30f;
-        DrawConstellationStar(starCX, starCY, starR);
+        // === 右侧内容 ===
+        switch (_tab)
+        {
+            case 0: DrawStats(contentX, contentY, contentW, contentH); break;
+            case 1: DrawSkills(contentX, contentY, contentW, contentH); break;
+            case 2: DrawStar(contentX, contentY, contentW, contentH); break;
+        }
     }
 
-    // ── 属性列表 ────────────────────────────────────────────
-    private void DrawStats(float x, float y, float width)
+    // ───── 属性页 ───────────────────────────────────────────
+    private void DrawStats(float x, float y, float w, float h)
     {
-        DrawString(ThemeDB.FallbackFont, new Vector2(x, y - 24f),
-            "◆ 基础属性", fontSize: 18, modulate: new Color(0.7f, 0.8f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(x, y - 4f), "基础属性", fontSize: 20,
+            modulate: new Color(0.7f, 0.8f, 1f));
 
-        var stats = new (string name, string id, bool isPercent)[]
-        {
-            ("生命值",     "HP",             false),
-            ("攻击力",     "Atk",            false),
-            ("防御力",     "DefFinal",       false),
-            ("暴击率",     "CritRate",       true),
-            ("暴击伤害",   "CritDMG",        true),
-            ("破韧增伤",   "BreakDmgBonus",  true),
-        };
+        float rowH = (h - 60f) / StatDefs.Length;
+        float barW = w * 0.55f, labelW = 72f;
 
-        float rowH = 36f;
-        for (int i = 0; i < stats.Length; i++)
+        for (int i = 0; i < StatDefs.Length; i++)
         {
-            var (name, id, isPct) = stats[i];
-            float rowY = y + i * rowH;
+            var (name, id, pct) = StatDefs[i];
+            float rowY = y + 44f + i * rowH;
             float val = _player.GetStat(id);
 
+            // 行背景
+            DrawRect(new Rect2(x, rowY - 2f, w - 10f, rowH - 4f), new Color(0.08f, 0.09f, 0.14f, 0.5f));
+
             // 标签
-            DrawString(ThemeDB.FallbackFont, new Vector2(x, rowY), name, fontSize: 15);
+            var labelCol = i < 3 ? new Color(0.75f, 0.8f, 0.9f) : new Color(0.55f, 0.5f, 0.4f);
+            DrawString(ThemeDB.FallbackFont, new Vector2(x + 16f, rowY + 4f), name, fontSize: 15, modulate: labelCol);
 
-            // 数值背景条
-            float barX = x + 80f, barW = width - 80f, barH = 14f;
-            DrawRect(new Rect2(barX, rowY + 2f, barW, barH), new Color(0.12f, 0.13f, 0.18f));
+            // 条
+            float barX = x + labelW + 20f, barH = rowH * 0.4f;
+            DrawRect(new Rect2(barX, rowY + rowH * 0.3f, barW, barH), new Color(0.1f, 0.11f, 0.16f));
+            float ratio = pct ? Mathf.Clamp(val / 100f, 0, 1) : Mathf.Clamp(val / 2000f, 0, 1);
+            var c = i switch { 0 => new Color(0.2f, 0.68f, 0.3f), 1 => new Color(0.88f, 0.5f, 0.12f),
+                2 => new Color(0.25f, 0.5f, 0.85f), _ => new Color(0.7f, 0.55f, 0.18f) };
+            DrawRect(new Rect2(barX, rowY + rowH * 0.3f, barW * ratio, barH), c);
 
-            float ratio = 0f;
-            if (isPct) ratio = Mathf.Clamp(val / 100f, 0f, 1f);
-            else       ratio = Mathf.Clamp(val / 2000f, 0f, 1f);
-
-            var barColor = i switch
-            {
-                0 => new Color(0.2f, 0.7f, 0.3f),
-                1 => new Color(0.9f, 0.55f, 0.15f),
-                2 => new Color(0.3f, 0.5f, 0.9f),
-                _ => new Color(0.75f, 0.6f, 0.2f),
-            };
-            DrawRect(new Rect2(barX, rowY + 2f, barW * ratio, barH), barColor);
-
-            // 数值
-            string valStr = isPct ? $"{val:F1}%" : $"{val:F0}";
-            DrawString(ThemeDB.FallbackFont, new Vector2(barX + barW + 8f, rowY),
-                valStr, fontSize: 14, modulate: Colors.White);
+            string s = pct ? $"{val:F1}%" : $"{val:F0}";
+            DrawString(ThemeDB.FallbackFont, new Vector2(barX + barW + 16f, rowY + 4f), s, fontSize: 14,
+                modulate: Colors.White);
         }
     }
 
-    // ── 技能列表 ──────────────────────────────────────────────
-    private void DrawSkills(float x, float y, float width)
+    // ───── 技能页 ───────────────────────────────────────────
+    private void DrawSkills(float x, float y, float w, float h)
     {
-        DrawString(ThemeDB.FallbackFont, new Vector2(x, y - 24f),
-            "◆ 技能", fontSize: 18, modulate: new Color(0.7f, 0.8f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(x, y - 4f), "技能", fontSize: 20,
+            modulate: new Color(0.7f, 0.8f, 1f));
 
-        var skills = new (string name, string file)[]
+        float cardH = Mathf.Min((h - 60f) / 3, 100f);
+        for (int i = 0; i < SkillDefs.Length; i++)
         {
-            ("普攻 · 剑击",    "normal_attack_01"),
-            ("战技 · 爆裂",    "skill_aoe"),
-            ("充能 · 汇聚",    "skill_charge"),
-        };
-
-        float rowH = 54f;
-        for (int i = 0; i < skills.Length; i++)
-        {
-            var (name, file) = skills[i];
-            float rowY = y + i * rowH;
+            var (name, file, key, color) = SkillDefs[i];
+            float cy = y + 44f + i * (cardH + 12f);
 
             var spec = _player.GetAbilitySpecByName(file);
-            int level = spec?.GetEffectiveLevel() ?? 0;
-            string key = i == 0 ? "Z" : i == 1 ? "X" : "C";
+            int lv = spec?.GetEffectiveLevel() ?? 0;
 
-            // 背景
-            DrawRect(new Rect2(x, rowY, width, rowH - 6f),
-                new Color(0.10f, 0.11f, 0.18f, 0.6f));
-            DrawRect(new Rect2(x, rowY, width, rowH - 6f),
-                new Color(0.3f, 0.4f, 0.6f, 0.3f), filled: false);
+            // 卡片
+            DrawRect(new Rect2(x, cy, w - 10f, cardH), new Color(0.07f, 0.08f, 0.13f, 0.7f));
+            DrawRect(new Rect2(x, cy, 4f, cardH), color);
+            DrawRect(new Rect2(x, cy, w - 10f, cardH), new Color(0.25f, 0.3f, 0.45f, 0.3f), false);
 
-            // 快捷键
-            DrawString(ThemeDB.FallbackFont, new Vector2(x + 12f, rowY + 6f),
-                $"[{key}]", fontSize: 16, modulate: Colors.Yellow);
+            // 快捷键圆圈
+            float kcx = x + 42f, kcy = cy + cardH * 0.5f, kr = 22f;
+            DrawCircle(new Vector2(kcx, kcy), kr, new Color(0.1f, 0.11f, 0.18f));
+            DrawArc(new Vector2(kcx, kcy), kr, 0, Mathf.Tau, 32, color, 2.5f);
+            DrawString(ThemeDB.FallbackFont, new Vector2(kcx - 8f, kcy - 10f), key, fontSize: 18,
+                modulate: color);
 
-            // 技能名
-            DrawString(ThemeDB.FallbackFont, new Vector2(x + 52f, rowY + 6f),
-                name, fontSize: 15, modulate: Colors.White);
-
-            // 等级
-            DrawString(ThemeDB.FallbackFont, new Vector2(x + width - 64f, rowY + 6f),
-                $"Lv.{level}", fontSize: 14, modulate: new Color(0.4f, 0.7f, 1f));
+            // 名称 + 等级
+            DrawString(ThemeDB.FallbackFont, new Vector2(kcx + kr + 18f, kcy - 12f), name, fontSize: 17,
+                modulate: Colors.White);
+            DrawString(ThemeDB.FallbackFont, new Vector2(kcx + kr + 18f, kcy + 8f), $"Lv.{lv}", fontSize: 13,
+                modulate: new Color(0.4f, 0.65f, 0.9f));
         }
     }
 
-    // ── 命座星图（六芒星 + 连线 + 节点）────────────────────
-    private void DrawConstellationStar(float cx, float cy, float r)
+    // ───── 星魂页 ───────────────────────────────────────────
+    private void DrawStar(float x, float y, float w, float h)
     {
-        DrawString(ThemeDB.FallbackFont, new Vector2(cx - r * 0.3f, cy - r - 44f),
-            "◆ 命座", fontSize: 18, modulate: new Color(0.7f, 0.8f, 1f));
+        DrawString(ThemeDB.FallbackFont, new Vector2(x, y - 4f), "星魂", fontSize: 20,
+            modulate: new Color(0.7f, 0.8f, 1f));
 
+        float cx = x + w * 0.45f, cy = y + h * 0.48f, r = Mathf.Min(w, h) * 0.35f;
         var unlocked = _constMgr?.Unlocked;
-        float nodeR = r * 0.12f;
+        float nr = r * 0.10f;
 
         // 连线
-        foreach (var (ai, bi) in StarLines)
+        for (int e = 0; e < StarEdges.Length; e++)
         {
-            var a = StarLayout[ai] * r + new Vector2(cx, cy);
-            var b = StarLayout[bi] * r + new Vector2(cx, cy);
-            bool bothUnlocked = unlocked != null && unlocked[ai] && unlocked[bi];
-            var lineColor = bothUnlocked
-                ? new Color(1f, 0.75f, 0.2f, 0.7f)
-                : new Color(0.3f, 0.3f, 0.4f, 0.4f);
-            DrawLine(a, b, lineColor, bothUnlocked ? 2f : 1.2f);
+            var (a, b) = StarEdges[e];
+            var p1 = StarPos[a] * r + new Vector2(cx, cy);
+            var p2 = StarPos[b] * r + new Vector2(cx, cy);
+            bool both = unlocked != null && a < unlocked.Length && b < unlocked.Length && unlocked[a] && unlocked[b];
+            DrawLine(p1, p2, both ? new Color(1f, 0.7f, 0.15f, 0.6f) : new Color(0.25f, 0.25f, 0.35f, 0.35f),
+                both ? 2f : 1.2f);
         }
 
         // 节点
         for (int i = 0; i < 6; i++)
         {
-            var pos = StarLayout[i] * r + new Vector2(cx, cy);
-            bool isUnlocked = unlocked != null && unlocked[i];
+            var pos = StarPos[i] * r + new Vector2(cx, cy);
+            bool on = unlocked != null && i < unlocked.Length && unlocked[i];
 
-            // 光辉晕
-            if (isUnlocked)
-                DrawCircle(pos, nodeR * 1.6f, new Color(1f, 0.7f, 0.15f, 0.15f));
+            if (on) DrawCircle(pos, nr * 2f, new Color(1f, 0.65f, 0.1f, 0.12f));
+            DrawCircle(pos, nr, on ? new Color(0.85f, 0.6f, 0.1f) : new Color(0.18f, 0.18f, 0.28f));
+            DrawArc(pos, nr, 0, Mathf.Tau, 28, on ? new Color(1f, 0.75f, 0.2f) : new Color(0.35f, 0.35f, 0.45f), 2f);
 
-            // 节点圆
-            var fill = isUnlocked ? new Color(0.9f, 0.65f, 0.15f) : new Color(0.2f, 0.2f, 0.3f);
-            DrawCircle(pos, nodeR, fill);
-            DrawArc(pos, nodeR, 0f, Mathf.Tau, 32,
-                isUnlocked ? new Color(1f, 0.8f, 0.3f) : new Color(0.4f, 0.4f, 0.5f), 2f);
-
-            // 数字
-            string label = isUnlocked ? $"{i + 1}✓" : $"{i + 1}";
-            var labelColor = isUnlocked ? Colors.White : new Color(0.5f, 0.5f, 0.6f);
-            DrawString(ThemeDB.FallbackFont, pos - new Vector2(6f, 8f),
-                label, fontSize: 12, modulate: labelColor);
+            DrawString(ThemeDB.FallbackFont, pos - new Vector2(6, 8), on ? $"{i + 1}✓" : $"{i + 1}",
+                fontSize: 11, modulate: on ? Colors.White : new Color(0.45f, 0.45f, 0.55f));
         }
     }
 }
+

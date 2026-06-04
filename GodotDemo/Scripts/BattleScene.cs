@@ -169,6 +169,7 @@ public partial class BattleScene : Node2D
             case Key.R:      ResetBattle();                              break;
             case Key.T:      _hud.ClearLog();                            break;
             case Key.P:      _charPanel?.Toggle();                       break;
+            case Key.Tab:    _charPanel?.NextTab();                      break;
         }
     }
 
