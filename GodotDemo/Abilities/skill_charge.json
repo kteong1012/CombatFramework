@@ -3,13 +3,31 @@
     "AbilityCosts": [
         { "Stat": "Energy", "Value": { "$type": "const", "Value": 50.0 } }
     ],
+
+    "AbilityModifiers": {
+        "ex_point_buff": {
+            "Name": "ex_point_buff",
+            "StackMode": "StackCount",
+            "EffectName": "ex_glow"
+        }
+    },
+
     "AbilityEvents": {
         "OnSpellStart": [
             {
-                "$type": "ModifyStatActionData",
+                "$type": "ApplyModifierActionData",
                 "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
-                "Stat": "Player1_ExPoint",
-                "Value": { "$type": "const", "Value": 3.0 }
+                "ModifierName": "ex_point_buff"
+            },
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "ex_point_buff"
+            },
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "ex_point_buff"
             }
         ]
     }

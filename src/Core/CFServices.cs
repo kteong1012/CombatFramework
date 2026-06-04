@@ -38,4 +38,5 @@ public static class CFServices
 {
     public static IUnitQueryService UnitQuery { get; set; }
     public static IShapeQueryService ShapeQuery { get; set; }
+    public static IVfxEffectService Vfx { get; set; }
 }

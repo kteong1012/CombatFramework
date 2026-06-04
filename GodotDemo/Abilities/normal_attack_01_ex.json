@@ -1,8 +1,5 @@
 {
     "Name": "normal_attack_01_ex",
-    "AbilityCosts": [
-        { "Stat": "Player1_ExPoint", "Value": { "$type": "const", "Value": 1.0 } }
-    ],
 
     "AbilityModifiers": {
         "combo2_window": {
@@ -15,6 +12,11 @@
 
     "AbilityEvents": {
         "OnSpellStart": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "ex_point_buff"
+            },
             {
                 "$type": "ForEachHitActionData",
                 "Target": {

@@ -49,7 +49,6 @@ public partial class BattleScene : Node2D
         _player.Stats.Set("Energy", 100f);
         _player.Stats.Set("DefFinal", 0f);
         _player.Stats.Set("HP", MaxHp);
-        _player.Stats.Set("Player1_ExPoint", 0f);
 
         // ── 3 个敌人 ──────────────────────────────────────
         for (int i = 0; i < 3; i++)
@@ -66,6 +65,8 @@ public partial class BattleScene : Node2D
         var shapeSvc = new GodotShapeQueryService(allUnits);
         CFServices.ShapeQuery = shapeSvc;
         CFServices.UnitQuery  = shapeSvc;
+        var vfxSvc = new GodotVfxService();
+        CFServices.Vfx = vfxSvc;
         shapeSvc.OnShowBoxPreview = HandleBoxPreview;
         shapeSvc.OnShowCirclePreview = HandleCirclePreview;
 
@@ -85,6 +86,7 @@ public partial class BattleScene : Node2D
         // ── 绑定 Node ──────────────────────────────────────
         _playerNode = GetNode<UnitNode>("PlayerUnit");
         _playerNode.Init(_player, Colors.CornflowerBlue, MaxHp, isPlayer: true);
+        vfxSvc.Register(_player, _playerNode);
         // 同步初始世界坐标到 Entity
         _player.Position = new System.Numerics.Vector3(_playerNode.Position.X, _playerNode.Position.Y, 0f);
 
@@ -92,6 +94,7 @@ public partial class BattleScene : Node2D
         {
             var node = GetNode<UnitNode>($"Enemy{i}");
             node.Init(_enemies[i], Colors.Tomato, EnemyHp);
+            vfxSvc.Register(_enemies[i], node);
             _enemies[i].Position = new System.Numerics.Vector3(node.Position.X, node.Position.Y, 0f);
             _enemyNodes.Add(node);
         }
@@ -100,7 +103,7 @@ public partial class BattleScene : Node2D
 
         BuildHud();
 
-        Log($"战斗开始！ATK={_player.GetStat("Atk"):F0}  [Z]普攻  [X]AOE  [C]吸血  [WASD]移动  [R]重置");
+        Log($"战斗开始！ATK={_player.GetStat("Atk"):F0}  [Z]普攻  [X]AOE  [C]充能  [WASD]移动  [R]重置  [T]清Log");
     }
 
     public override void _Input(InputEvent ev)
@@ -116,6 +119,7 @@ public partial class BattleScene : Node2D
             case Key.X: CastSkill(SlotType.Skill,     target, "AOE");  break;
             case Key.C: CastSkill(SlotType.Burst,     target, "充能"); break;
             case Key.R: ResetBattle(); break;
+            case Key.T: ClearLog(); break;
         }
     }
 
@@ -162,8 +166,11 @@ public partial class BattleScene : Node2D
         float heal = _player.GetStat("HP") - playerHpBefore;
         float energyAfter = _player.GetStat("Energy");
 
+        string totalDmgStr = totalDmg > 0f ? $"伤害 {totalDmg:F0}" : "";
         string healStr = heal > 0 ? $"  回血 +{heal:F0}" : "";
-        Log($"[{skillName}] 总伤 {totalDmg:F0}{healStr}  能量 {energyBefore:F0}→{energyAfter:F0}");
+        string energyStr = energyAfter != energyBefore ? $"  能量 {energyBefore:F0}→{energyAfter:F0}" : "";
+            if (totalDmgStr != "" || healStr != "" || energyStr != "")
+                Log($"[{skillName}] 成功！{totalDmgStr}{healStr}{energyStr}");
 
         CheckReset();
     }
@@ -191,6 +198,11 @@ public partial class BattleScene : Node2D
     {
         GD.Print($"[BattleScene] HandleCirclePreview radius={radius:F0}");
         _playerNode?.ShowSkillCirclePreview(radius);
+    }
+
+    private void ClearLog()
+    {
+        _logLabel.Text = "";
     }
 
     private void ResetBattle()

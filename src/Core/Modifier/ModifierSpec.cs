@@ -100,14 +100,28 @@ public class ModifierSpec
     public virtual void OnCreated()
     {
         ApplyProperties();
+        PlayEffect();
         DispatchEvent(ModifierEvents.OnCreated);
     }
 
-    /// <summary>modifier 过期或被主动移除时触发：撤销 Properties 并派发 OnDestroy 事件。</summary>
+    /// <summary>modifier 过期或被主动移除时触发：撤销 Properties、停止特效并派发 OnDestroy 事件。</summary>
     public virtual void OnDestroy()
     {
+        StopEffect();
         RemoveProperties();
         DispatchEvent(ModifierEvents.OnDestroy);
+    }
+
+    private void PlayEffect()
+    {
+        if (string.IsNullOrEmpty(Data.EffectName)) return;
+        CFServices.Vfx?.PlayOnUnit(Data.EffectName, Parent);
+    }
+
+    private void StopEffect()
+    {
+        if (string.IsNullOrEmpty(Data.EffectName)) return;
+        CFServices.Vfx?.StopOnUnit(Data.EffectName, Parent);
     }
     public virtual void OnIntervalThink() => DispatchEvent(ModifierEvents.OnIntervalThink);
     public virtual void OnAttackStart()   => DispatchEvent(ModifierEvents.OnAttackStart);

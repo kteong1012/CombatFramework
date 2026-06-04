@@ -1,5 +1,6 @@
 using Godot;
 using CombatFramework.Unit;
+using System.Collections.Generic;
 
 /// <summary>
 /// 代表场景中一个战斗单位的 Node2D。
@@ -20,6 +21,12 @@ public partial class UnitNode : Node2D
     private Godot.Vector2 _skillAreaSize;
     private float _skillAreaRadius;
     private bool _skillAreaIsCircle;
+
+    // ── VFX 标记（由 GodotVfxService 管理）────────────────
+    private readonly HashSet<string> _activeVfx = new();
+
+    public void AddVfx(string name)   { _activeVfx.Add(name); }
+    public void RemoveVfx(string name) { _activeVfx.Remove(name); }
 
     /// <summary>显示盒形技能范围预览，0.3 秒后自动消失。</summary>
     public void ShowSkillBoxPreview(Godot.Vector2 offset, Godot.Vector2 size)
@@ -106,6 +113,15 @@ public partial class UnitNode : Node2D
         // 身体圆形
         DrawCircle(Godot.Vector2.Zero, 32f, bodyColor);
         DrawArc(Godot.Vector2.Zero, 32f, 0f, Mathf.Tau, 48, Colors.White, 2f);
+
+        // ── 自动特效：有 VFX 标记时金色脉冲环（由 modifier.EffectName 驱动）──
+        if (_activeVfx.Count > 0 && !dead)
+        {
+            float pulse = 1f + 0.15f * Mathf.Sin((float)Time.GetTicksMsec() * 0.005f);
+            float ringR = 40f * pulse;
+            var gold = new Color(1f, 0.75f, 0.15f, 0.6f);
+            DrawArc(Godot.Vector2.Zero, ringR, 0f, Mathf.Tau, 48, gold, 3f);
+        }
 
         if (dead)
         {

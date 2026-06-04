@@ -21,10 +21,8 @@
         {
             "To": "normal_attack_01_ex",
             "Condition": {
-                "$type": "CheckStat",
-                "StatName": "Player1_ExPoint",
-                "Op": "Gte",
-                "Value": 1.0,
+                "$type": "HasModifier",
+                "ModifierName": "ex_point_buff",
                 "On": "Caster"
             }
         }

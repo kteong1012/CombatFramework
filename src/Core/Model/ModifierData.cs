@@ -23,6 +23,9 @@ public class ModifierData
     public ModifierStackMode StackMode { get; set; } = ModifierStackMode.None;
     public List<StatModifierEntry> Properties { get; set; } = new();
 
+    /// <summary>自动特效名。非空时 OnCreated 自动调用 Vfx.PlayOnUnit，OnDestroy 自动调用 StopOnUnit。</summary>
+    public string EffectName { get; set; }
+
     /// <summary>事件名 → Action 列表。Key 对应 ModifierEvents 常量。</summary>
     public Dictionary<string, List<AbilityEventActionData>> Events { get; set; }
 }
