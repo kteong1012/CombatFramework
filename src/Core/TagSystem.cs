@@ -10,7 +10,7 @@ public class TagSystem
     private readonly HashSet<string> _tags = new();
 
     /// <summary>标签变化事件：(tag, added=true/removed=false)</summary>
-    public event Action<string, bool>? OnTagChanged;
+    public event Action<string, bool> OnTagChanged;
 
     public bool HasTag(string tag) => _tags.Contains(tag);
     public bool HasAnyTag(params string[] tags) => tags.Any(_tags.Contains);

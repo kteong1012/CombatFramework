@@ -1,3 +1,4 @@
+using CombatFramework.Bridge;
 using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Core.Enums;
 using CombatFramework.Unit;
@@ -42,7 +43,7 @@ public class AreaTargetSelector : TargetSelector
 
     public override IEnumerable<UnitEntity> Resolve(AbilityEventContext context)
     {
-        var service = CFServices.UnitQuery;
+        var service = CFBridge.Bridge.UnitQuery;
         if (service == null)
             return Enumerable.Empty<UnitEntity>();
 
@@ -69,7 +70,7 @@ public class BoxTargetSelector : TargetSelector
 
     public override IEnumerable<UnitEntity> Resolve(AbilityEventContext context)
     {
-        var service = CFServices.ShapeQuery;
+        var service = CFBridge.Bridge.ShapeQuery;
         if (service == null)
             return Enumerable.Empty<UnitEntity>();
 

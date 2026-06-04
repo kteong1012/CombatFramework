@@ -1,3 +1,4 @@
+using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Core.Enums;
@@ -37,8 +38,8 @@ public class ForEachHitAction : AbilityEventAction
 
     private static void ShowAreaPreviewIfNeeded(TargetSelector selector, AbilityEventContext context)
     {
-        var shapeQuery = CFServices.ShapeQuery;
-        if (shapeQuery == null) { CFLog.Warning("[Preview] CFServices.ShapeQuery is null"); return; }
+        var shapeQuery = CFBridge.Bridge.ShapeQuery;
+        if (shapeQuery == null) { CFLog.Warning("[Preview] CFBridge.Bridge.ShapeQuery is null"); return; }
         if (selector == null)   { CFLog.Warning("[Preview] TargetSelector is null"); return; }
 
         switch (selector)

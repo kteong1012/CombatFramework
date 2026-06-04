@@ -24,8 +24,7 @@ public class AbilityEventActionTests
     // ─── 测试初始化 ──────────────────────────────────────────
     static AbilityEventActionTests()
     {
-        if (CFBridge.Bridge == null)
-            CFBridge.Bridge = new TestBridge();
+        CFBridge.Initialize(new TestBridge());
     }
 
     // ─── 1. 序列化往返 ─────────────────────────────────────────

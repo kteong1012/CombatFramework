@@ -41,7 +41,7 @@ public partial class BattleScene : Node2D
 
     public override void _Ready()
     {
-        CFBridge.Bridge = new GodotCFBridge();
+        CFBridge.Initialize(new GodotCFBridge());
 
         // ── 玩家 ──────────────────────────────────────────
         _player = new UnitEntity { Team = TeamFlag.Friendly };
@@ -63,10 +63,11 @@ public partial class BattleScene : Node2D
         var allUnits = new List<UnitEntity> { _player };
         allUnits.AddRange(_enemies);
         var shapeSvc = new GodotShapeQueryService(allUnits);
-        CFServices.ShapeQuery = shapeSvc;
-        CFServices.UnitQuery  = shapeSvc;
         var vfxSvc = new GodotVfxService();
-        CFServices.Vfx = vfxSvc;
+        var bridge = (GodotCFBridge)CFBridge.Bridge;
+        bridge.ShapeQuery = shapeSvc;
+        bridge.UnitQuery  = shapeSvc;
+        bridge.Vfx        = vfxSvc;
         shapeSvc.OnShowBoxPreview = HandleBoxPreview;
         shapeSvc.OnShowCirclePreview = HandleCirclePreview;
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using CombatFramework.Core;
 using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Damage;
@@ -21,6 +22,15 @@ namespace CombatFramework.Bridge
         /// 可按 attacker/victim 类型走完全不同的数值流程。
         /// </summary>
         public IBattleFormula Formula { get; protected set; } = new DefaultBattleFormula();
+
+        /// <summary>盒形/圆形范围查询 + 预览。实现 <see cref="IShapeQueryService"/>。</summary>
+        public virtual IShapeQueryService ShapeQuery { get; set; }
+
+        /// <summary>圆形单位查询。实现 <see cref="IUnitQueryService"/>。</summary>
+        public virtual IUnitQueryService UnitQuery { get; set; }
+
+        /// <summary>Modifier 自动特效。实现 <see cref="IVfxEffectService"/>。</summary>
+        public virtual IVfxEffectService Vfx { get; set; }
 
         protected AbstractCombatFrameworkBridge()
         {

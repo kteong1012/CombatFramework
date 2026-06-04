@@ -22,8 +22,7 @@ public class FullBattleFlowTests
     // ─── 测试初始化 ──────────────────────────────────────────
     static FullBattleFlowTests()
     {
-        if (CFBridge.Bridge == null)
-            CFBridge.Bridge = new TestBridge();
+        CFBridge.Initialize(new TestBridge());
     }
 
     // ─── 辅助 ─────────────────────────────────────────────────
@@ -98,9 +97,9 @@ public class FullBattleFlowTests
     public void TryCast_DeductsCostOnSuccess()
     {
         // Arrange
-        var caster  = MakeCaster();
-        var target  = MakeTarget();
-        CFServices.ShapeQuery = new TestShapeQueryService(new[] { caster, target });
+        var caster = MakeCaster();
+        var target = MakeTarget();
+        ((TestBridge)CFBridge.Bridge).ShapeQuery = new TestShapeQueryService(new[] { caster, target });
 
         caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
         caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
@@ -120,7 +119,7 @@ public class FullBattleFlowTests
         var caster = MakeCaster();
         caster.Stats.Set("Energy", 10f); // 不够 30
         var target = MakeTarget();
-        CFServices.ShapeQuery = new TestShapeQueryService(new[] { caster, target });
+        ((TestBridge)CFBridge.Bridge).ShapeQuery = new TestShapeQueryService(new[] { caster, target });
 
         caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
         caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
@@ -137,14 +136,14 @@ public class FullBattleFlowTests
     public void TryCast_DamagesEnemyAndSkipsFriendly()
     {
         // Arrange
-        var caster  = MakeCaster();
-        var enemy   = MakeTarget(); // TeamFlag.Enemy
-        var ally    = new UnitEntity { Team = TeamFlag.Friendly };
+        var caster = MakeCaster();
+        var enemy = MakeTarget(); // TeamFlag.Enemy
+        var ally = new UnitEntity { Team = TeamFlag.Friendly };
         ally.Stats.Set("HP", 500f);
         ally.Stats.Set("DefFinal", 0f);
 
         // 所有 unit 注册到 ShapeQuery
-        CFServices.ShapeQuery = new TestShapeQueryService(new[] { caster, enemy, ally });
+        CFBridge.Bridge.ShapeQuery = new TestShapeQueryService(new[] { caster, enemy, ally });
 
         caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
         caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
@@ -153,7 +152,7 @@ public class FullBattleFlowTests
         caster.TryCast(1, enemy);
 
         // Assert — 敌方 HP 扣减，友方 HP 不变
-        Assert.True(enemy.GetStat("HP") < 1000f,  "enemy should take damage");
+        Assert.True(enemy.GetStat("HP") < 1000f, "enemy should take damage");
         Assert.Equal(500f, ally.GetStat("HP"), precision: 2); // 友方不受影响
     }
 }

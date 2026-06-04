@@ -9,14 +9,14 @@ public class EventBus
 
     public static EventBus Global { get; } = new();
 
-    public void Subscribe(string eventType, Action<object?> handler)
+    public void Subscribe(string eventType, Action<object> handler)
     {
         if (!_handlers.ContainsKey(eventType))
             _handlers[eventType] = new List<Delegate>();
         _handlers[eventType].Add(handler);
     }
 
-    public void Unsubscribe(string eventType, Action<object?> handler)
+    public void Unsubscribe(string eventType, Action<object> handler)
     {
         if (_handlers.TryGetValue(eventType, out var list))
             list.Remove(handler);

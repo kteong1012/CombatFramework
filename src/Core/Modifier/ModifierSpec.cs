@@ -115,13 +115,13 @@ public class ModifierSpec
     private void PlayEffect()
     {
         if (string.IsNullOrEmpty(Data.EffectName)) return;
-        CFServices.Vfx?.PlayOnUnit(Data.EffectName, Parent);
+        CFBridge.Bridge.Vfx?.PlayOnUnit(Data.EffectName, Parent);
     }
 
     private void StopEffect()
     {
         if (string.IsNullOrEmpty(Data.EffectName)) return;
-        CFServices.Vfx?.StopOnUnit(Data.EffectName, Parent);
+        CFBridge.Bridge.Vfx?.StopOnUnit(Data.EffectName, Parent);
     }
     public virtual void OnIntervalThink() => DispatchEvent(ModifierEvents.OnIntervalThink);
     public virtual void OnAttackStart()   => DispatchEvent(ModifierEvents.OnAttackStart);
