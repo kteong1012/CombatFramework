@@ -4,6 +4,9 @@
     "AbilityCosts": [
         { "Stat": "Energy", "Value": { "$type": "const", "Value": 40.0 } }
     ],
+    "AbilitySpecialFields": {
+        "coeff": [0.5, 0.55, 0.6, 0.7, 0.8]
+    },
     "AbilityEvents": {
         "OnSpellStart": [
             {
@@ -26,7 +29,7 @@
                 "Damage": {
                     "$type": "kxb",
                     "BaseStat": "Atk",
-                    "K": { "$type": "const", "Value": 0.8 },
+                    "K": { "$type": "ability_special", "Name": "coeff" },
                     "B": { "$type": "const", "Value": 0.0 }
                 },
                 "Teams": "Enemy"

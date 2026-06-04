@@ -1,0 +1,45 @@
+{
+    "Name": "skill_aoe_c2",
+    "Tags": ["skill_type_burst"],
+
+    "AbilitySpecialFields": {
+        "coeff": [0.8, 0.88, 0.96, 1.04, 1.12]
+    },
+
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "ForEachHitActionData",
+                "Target": {
+                    "$type": "BoxTargetSelector",
+                    "Center": "Caster",
+                    "Offset":        { "X": 0.0, "Y": 0.0, "Z": 0.0 },
+                    "EulerRotation": { "X": 0.0, "Y": 0.0, "Z": 0.0 },
+                    "Size":          { "X": 600.0, "Y": 400.0, "Z": 1.0 },
+                    "Teams": "All"
+                }
+            }
+        ],
+        "OnHitTarget": [
+            {
+                "$type": "DamageActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "Element": "FIRE",
+                "Damage": {
+                    "$type": "kxb",
+                    "BaseStat": "Atk",
+                    "K": { "$type": "ability_special", "Name": "coeff" },
+                    "B": { "$type": "const", "Value": 0.0 }
+                },
+                "Teams": "Enemy"
+            },
+            {
+                "$type": "DamageActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "Element": "FIRE",
+                "Damage": { "$type": "const", "Value": 50.0 },
+                "Teams": "Enemy"
+            }
+        ]
+    }
+}

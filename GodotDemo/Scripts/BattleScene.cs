@@ -87,6 +87,7 @@ public partial class BattleScene : Node2D
         // 命座（从配置读取 constellation → abilityFile）
         var constFiles = HeroConfig.GetConstellationFiles(HeroConfig.PlayerKey);
         _constellation = new ConstellationManager(_player, constFiles);
+        _constellation.Resolver = Hero1001Resolver.Resolve;
     }
 
     private void InitNodes()
@@ -256,6 +257,9 @@ public partial class BattleScene : Node2D
 
         _player.Update(dt);
         foreach (var e in _enemies) e.Update(dt);
+
+        // ── 命座后处理 ──
+        _constellation.PostProcess();
 
         // ── 训练模式 ──
         if (TrainingConfig.EnergyLock)
