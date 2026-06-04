@@ -86,7 +86,7 @@ DamagePipeline.GlobalEventBus.Subscribe(
     EventBus.Events.EntityKilled,
     data => {
         if (HasConstellation(unit, 6))
-            unit.AbilitySlots.All.ToList()
+            unit.Abilities.Values.ToList()
                 .ForEach(a => a.EndCooldown());
     }
 );

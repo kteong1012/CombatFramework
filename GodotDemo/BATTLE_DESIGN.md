@@ -83,41 +83,17 @@ $$
 - 命座解锁后，对应被动自动 Equip 到专属槽位并**永久生效**（不可卸载）
 - 命座 Ability 全部为被动（Passive），不可主动触发
 
-### 2.2 槽位系统
+### 2.2 技能管理
 
-#### 枚举定义
-
-所有槽位通过枚举访问，废弃裸索引。底层仍用数组存储，`slots[(int)SlotType.Xxx]` 取值。
+技能通过 `UnitEntity.EquipAbility(AbilitySpec)` 按名管理，Dictionary 索引：
 
 ```csharp
-public enum SlotType
-{
-    // ── 主动技能槽（显示在技能栏）──
-    NormalAtk   = 0,   // 普攻
-    Skill       = 1,   // 战技
-    Burst       = 2,   // 终结技
-    // ── 被动槽（不显示在技能栏）──
-    Passive0    = 3,
-    Passive1    = 4,
-    // ── 命座槽（不显示在技能栏）──
-    Const0      = 5,
-    Const1      = 6,
-    Const2      = 7,
-    Const3      = 8,
-    Const4      = 9,
-    Const5      = 10,
-}
+_player.EquipAbility(spec);  // 按 spec.Name 索引，同名自动替换
+_player.UnequipAbility("skill_name");
+var skill = _player.GetAbilitySpecByName("skill_name");
 ```
 
-#### 槽位显示属性（`Visible`）
-
-每个槽位有一个 `Visible` 标志，**只有 `Visible = true` 的槽位才渲染到技能栏 UI**。
-
-| 槽位类型 | Visible | 说明 |
-|---------|---------|------|
-| 主动技能槽 | ✅ true | 显示图标、快捷键、耗能 |
-| 被动槽 | ❌ false | 不显示，无需配置图标 |
-| 命座槽 | ❌ false | 不显示，无需配置图标 |
+游戏层自行管理 UI 槽位逻辑（如 3 个主动技能槽 + N 个被动/命座槽），框架不再包含 SlotType 枚举。
 
 ### 2.3 技能升级型命座（SkillBonus）
 

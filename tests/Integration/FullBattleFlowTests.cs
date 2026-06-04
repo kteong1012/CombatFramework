@@ -68,7 +68,7 @@ public class FullBattleFlowTests
         var passive = AbilitySpec.Create(passiveData);
 
         // Act — 装备时触发 OnEquipped → ApplyModifier → mod_atk_bonus.OnCreated → Stats.Add("Atk_Mult", 0.2)
-        caster.AbilitySlots.Equip(passive);
+        caster.EquipAbility(passive);
 
         // Assert
         Assert.Equal(0.2f, caster.GetStat("Atk_Mult"), precision: 4);
@@ -82,11 +82,11 @@ public class FullBattleFlowTests
         // Arrange
         var caster = MakeCaster();
         var passive = AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json"));
-        caster.AbilitySlots.Equip(passive);
+        caster.EquipAbility(passive);
         Assert.Equal(0.2f, caster.GetStat("Atk_Mult"), precision: 4); // precondition
 
         // Act — 卸下 → OnUnequipped → RemoveModifier → mod_atk_bonus.OnDestroy → Stats.Add("Atk_Mult", -0.2)
-        caster.AbilitySlots.Unequip("passive_atk_bonus");
+        caster.UnequipAbility("passive_atk_bonus");
 
         // Assert
         Assert.Equal(0f, caster.GetStat("Atk_Mult"), precision: 4);
@@ -101,11 +101,11 @@ public class FullBattleFlowTests
         var target = MakeTarget();
         ((TestBridge)CFBridge.Bridge).ShapeQuery = new TestShapeQueryService(new[] { caster, target });
 
-        caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
-        caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
+        caster.EquipAbility(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
+        caster.EquipAbility(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
 
-        // Act — 主动技能在 slot index 1（先装被动再装主动）
-        var result = caster.TryCast(1, target);
+        // Act
+        var result = caster.TryCast("active_attack", target);
 
         // Assert
         Assert.True(result);
@@ -121,11 +121,11 @@ public class FullBattleFlowTests
         var target = MakeTarget();
         ((TestBridge)CFBridge.Bridge).ShapeQuery = new TestShapeQueryService(new[] { caster, target });
 
-        caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
-        caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
+        caster.EquipAbility(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
+        caster.EquipAbility(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
 
         // Act
-        var result = caster.TryCast(1, target);
+        var result = caster.TryCast("active_attack", target);
 
         // Assert
         Assert.False(result);
@@ -145,11 +145,11 @@ public class FullBattleFlowTests
         // 所有 unit 注册到 ShapeQuery
         CFBridge.Bridge.ShapeQuery = new TestShapeQueryService(new[] { caster, enemy, ally });
 
-        caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
-        caster.AbilitySlots.Equip(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
+        caster.EquipAbility(AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
+        caster.EquipAbility(AbilitySpec.Create(LoadAbility("test_active_attack.json")));
 
         // Act
-        caster.TryCast(1, enemy);
+        caster.TryCast("active_attack", enemy);
 
         // Assert — 敌方 HP 扣减，友方 HP 不变
         Assert.True(enemy.GetStat("HP") < 1000f, "enemy should take damage");

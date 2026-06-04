@@ -40,14 +40,16 @@
 
 | 路径 | 层 | 说明 |
 |------|----|------|
-| `src/Core/` | 核心 | AbilityData/AbilityEffectData/AbilityInstance/ModifierData/ModifierInstance/CFConstants/CFLog/IVfxEffectService/PreCastEventData/TagSystem |
-| `src/Stat/` | 数值引擎 | CompoundStat/UnitStats/ResourceSystem/StatDefinition |
-| `src/Unit/` | 实体 | UnitEntity/UnitAbilitySlot |
-| `src/Modifier/` | Modifier | ModifierManager |
+| `src/Core/` | 核心 | AbilitySpec/AbilityData/ModifierData/ModifierSpec/StatsManager/TagSystem/TargetSelector |
+| `src/Core/Ability/` | 技能 | AbilitySpec/AbilityCondition/AbilityEvent |
+| `src/Core/Model/` | 模型 | AbilityData/ModifierData/AbilityEventActionData/AbilityTransformData |
+| `src/Core/Modifier/` | Modifier | ModifierManager/ModifierSpec/StatModifierEntry |
+| `src/Core/Stat/` | 数值 | StatsManager（复合公式） |
+| `src/Unit/` | 实体 | UnitEntity |
 | `src/Event/` | 事件 | EventBus/DamageEvent |
-| `src/Damage/` | 伤害 | DamagePipeline/IDamageFormula/DamageTypes |
-| `src/Projectile/` | 投射物 | ProjectileManager/TrackingProjectile/LinearProjectile |
-| `src/Lua/` | Lua 桥接 | LuaEngine/LuaAbilityLoader/LuaModifierBridge |
+| `src/Damage/` | 伤害 | BattlePipeline/ToughnessPipeline |
+| `src/EventAction/` | 行为 | DamageAction/HealAction/ApplyModifierAction 等 7 种 Action |
+| `src/Bridge/` | 桥接 | CFBridge/AbstractCombatFrameworkBridge |
 
 ## 示例
 

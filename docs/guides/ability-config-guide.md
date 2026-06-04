@@ -185,17 +185,17 @@
 ]
 ```
 
-## 技能装备 (BattleScene / 游戏侧)
+## 技能装备 (游戏侧)
 
 ```csharp
-// 主动技能（可见槽）
-_player.AbilitySlots.Equip(SlotType.NormalAtk, AbilitySpec.Create(data));  // Z
-_player.AbilitySlots.Equip(SlotType.Skill,     AbilitySpec.Create(data));  // X
-_player.AbilitySlots.Equip(SlotType.Burst,     AbilitySpec.Create(data));  // C
+// 所有技能按名装备，无槽位区分
+_player.EquipAbility(AbilitySpec.Create(data));  // Z 键普攻
+_player.EquipAbility(AbilitySpec.Create(data));  // X 键技能
+_player.EquipAbility(AbilitySpec.Create(data));  // C 键充能
 
 // 被动/隐藏技能（仅 Transform 按名查找）
-_player.AbilitySlots.Equip(SlotType.Passive0,  AbilitySpec.Create(data));
-_player.AbilitySlots.Equip(SlotType.Const0,    AbilitySpec.Create(data));
+_player.EquipAbility(AbilitySpec.Create(data));
+_player.EquipAbility(AbilitySpec.Create(data));
 ```
 
 Transform 目标技能必须已装备到某个槽位，否则 `GetAbilitySpecByName` 找不到。

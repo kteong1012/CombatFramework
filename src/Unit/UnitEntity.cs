@@ -3,7 +3,6 @@ using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
-using CombatFramework.Core.Enums;
 using CombatFramework.Core.Modifier;
 using CombatFramework.Core.Stat;
 
@@ -14,13 +13,14 @@ public class UnitEntity
     public uint Id { get; set; }
     public TeamFlag Team { get; set; } = TeamFlag.Neutral;
 
-    /// <summary>世界坐标（由 Unity 驱动，框架只读/写）</summary>
+    /// <summary>世界坐标（由引擎驱动，框架只读/写）</summary>
     public Vector3 Position { get; set; }
 
-    /// <summary>游戏层锁定的目标 entityId（0 = 无目标；由 Unity 侧设置）</summary>
+    /// <summary>游戏层锁定的目标 entityId（0 = 无目标；由引擎侧设置）</summary>
     public int TargetEntityId { get; set; }
 
-    public UnitAbilitySlot AbilitySlots { get; }
+    /// <summary>已装备的技能，按名称索引。</summary>
+    public Dictionary<string, AbilitySpec> Abilities { get; }
     public ModifierManager ModifierManager { get; }
     public StatsManager Stats { get; }
     public TagSystem Tags { get; }
@@ -31,7 +31,7 @@ public class UnitEntity
     public UnitEntity()
     {
         Tags = new TagSystem();
-        AbilitySlots = new UnitAbilitySlot(this);
+        Abilities = new Dictionary<string, AbilitySpec>();
         ModifierManager = new ModifierManager(this);
         Stats = new StatsManager();
 
@@ -41,19 +41,46 @@ public class UnitEntity
     public void Update(float dt)
     {
         ModifierManager.Update(dt);
-
         // TODO 刷新位置
     }
 
     public bool HasTag(string tag) => Tags.HasTag(tag);
     public float GetStat(string statId) => Stats.Get(statId);
 
-    /// <summary>TryCast 的 SlotType 枚举重载，等价于 TryCast((int)slotType, target)。</summary>
-    public bool TryCast(SlotType slotType, UnitEntity target = null)
-        => TryCast((int)slotType, target);
+    // ─── 技能管理 ────────────────────────────────────────────────
 
-    /// <summary>按技能名称查找已装备的 AbilitySpec。</summary>
-    public AbilitySpec GetAbilitySpecByName(string name) => AbilitySlots.Get(name);
+    /// <summary>按名称查找已装备的 AbilitySpec。</summary>
+    public AbilitySpec GetAbilitySpecByName(string name)
+        => Abilities.TryGetValue(name, out var ability) ? ability : null;
+
+    /// <summary>装备技能。若同名已存在，先触发 OnUnequipped 再替换。</summary>
+    public void EquipAbility(AbilitySpec ability)
+    {
+        if (ability?.Name == null) return;
+
+        if (Abilities.TryGetValue(ability.Name, out var old))
+        {
+            old.OnUnequipped(this);
+            old.Owner = null;
+        }
+
+        ability.Owner = this;
+        Abilities[ability.Name] = ability;
+        ability.OnEquipped(this);
+    }
+
+    /// <summary>卸下指定名称的技能。</summary>
+    public void UnequipAbility(string name)
+    {
+        if (Abilities.TryGetValue(name, out var ability))
+        {
+            ability.OnUnequipped(this);
+            ability.Owner = null;
+            Abilities.Remove(name);
+        }
+    }
+
+    // ─── 施放 ────────────────────────────────────────────────────
 
     /// <summary>
     /// 按名称查找技能并尝试施放。找不到技能时返回 false。
@@ -62,15 +89,6 @@ public class UnitEntity
     {
         var spec = GetAbilitySpecByName(abilityName);
         return spec != null && TryCast(spec, target);
-    }
-
-    /// <summary>
-    /// 尝试施放指定槽位的技能。先评估 Transforms，再对最终技能执行 CanCast + DeductCosts。
-    /// </summary>
-    public bool TryCast(int slotIndex, UnitEntity target = null)
-    {
-        var ability = AbilitySlots.GetByIndex(slotIndex);
-        return ability != null && TryCast(ability, target);
     }
 
     /// <summary>

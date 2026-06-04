@@ -12,8 +12,6 @@ public class AbilitySpec
     public string Name => data?.Name;
     public UnitEntity Owner { get; set; }
     public int Level { get; private set; } = 0;
-    /// <summary>当前所在槽位下标（0-based）。由 UnitAbilitySlot.Equip/Replace 维护。</summary>
-    public int SlotIndex { get; internal set; } = -1;
 
     /// <summary>提升技能等级并触发 OnUpgrade 事件。</summary>
     public void LevelUp()
@@ -60,7 +58,7 @@ public class AbilitySpec
         int bonus = 0;
         if (Owner != null && data?.Tags != null && data.Tags.Count > 0)
         {
-            foreach (var other in Owner.AbilitySlots.All)
+            foreach (var other in Owner.Abilities.Values)
             {
                 if (other == this) continue;
                 var entries = other.data?.SkillBonusEntries;

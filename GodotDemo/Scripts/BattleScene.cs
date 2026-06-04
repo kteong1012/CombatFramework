@@ -3,7 +3,6 @@ using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability;
 using CombatFramework.Core.Ability.AbilityEvent;
-using CombatFramework.Core.Enums;
 using CombatFramework.Core.Model;
 using CombatFramework.Unit;
 using Newtonsoft.Json;
@@ -71,18 +70,18 @@ public partial class BattleScene : Node2D
         shapeSvc.OnShowBoxPreview = HandleBoxPreview;
         shapeSvc.OnShowCirclePreview = HandleCirclePreview;
 
-        // ── 技能装备 ──────────────────────────────────────
-        _player.AbilitySlots.Equip(SlotType.Passive0,  EquipAbility("test_passive_atk_bonus.json"));
-        _player.AbilitySlots.Equip(SlotType.NormalAtk, EquipAbility("normal_attack_01.json"));
-        _player.AbilitySlots.Equip(SlotType.Skill,     EquipAbility("skill_aoe.json"));
-        _player.AbilitySlots.Equip(SlotType.Burst,     EquipAbility("skill_charge.json"));
-        // 连击后续段——不可见槽位，仅通过 Transform 按名查找
-        _player.AbilitySlots.Equip(SlotType.Const0,    EquipAbility("normal_attack_02.json"));
-        _player.AbilitySlots.Equip(SlotType.Const1,    EquipAbility("normal_attack_03.json"));
-        // 强化普攻——不可见槽位，通过 ExPoint transform 按名查找
-        _player.AbilitySlots.Equip(SlotType.Const2,    EquipAbility("normal_attack_01_ex.json"));
-        _player.AbilitySlots.Equip(SlotType.Const3,    EquipAbility("normal_attack_02_ex.json"));
-        _player.AbilitySlots.Equip(SlotType.Const4,    EquipAbility("normal_attack_03_ex.json"));
+        // ── 技能装备（按名管理）──────────────────────────
+        _player.EquipAbility(EquipAbility("test_passive_atk_bonus.json"));
+        _player.EquipAbility(EquipAbility("normal_attack_01.json"));
+        _player.EquipAbility(EquipAbility("skill_aoe.json"));
+        _player.EquipAbility(EquipAbility("skill_charge.json"));
+        // 连击后续段——通过 Transform 按名查找
+        _player.EquipAbility(EquipAbility("normal_attack_02.json"));
+        _player.EquipAbility(EquipAbility("normal_attack_03.json"));
+        // 强化普攻——通过 ExPoint transform 按名查找
+        _player.EquipAbility(EquipAbility("normal_attack_01_ex.json"));
+        _player.EquipAbility(EquipAbility("normal_attack_02_ex.json"));
+        _player.EquipAbility(EquipAbility("normal_attack_03_ex.json"));
 
         // ── 绑定 Node ──────────────────────────────────────
         _playerNode = GetNode<UnitNode>("PlayerUnit");
@@ -103,7 +102,7 @@ public partial class BattleScene : Node2D
             if (i < 2)
             {
                 var radianceLevel = i + 1;
-                _enemies[i].AbilitySlots.Equip(SlotType.Const0, EquipAbility("radiance_aura.json", radianceLevel));
+                _enemies[i].EquipAbility(EquipAbility("radiance_aura.json", radianceLevel));
             }
         }
 
@@ -124,27 +123,11 @@ public partial class BattleScene : Node2D
         switch (key.Keycode)
         {
             case Key.Z: CastSkillByName("normal_attack_01", target, "普攻"); break;
-            case Key.X: CastSkill(SlotType.Skill,     target, "AOE");  break;
-            case Key.C: CastSkill(SlotType.Burst,     target, "充能"); break;
+            case Key.X: CastSkillByName("skill_aoe",        target, "AOE");  break;
+            case Key.C: CastSkillByName("skill_charge",     target, "充能"); break;
             case Key.R: ResetBattle(); break;
             case Key.T: ClearLog(); break;
         }
-    }
-
-    private void CastSkill(SlotType slot, UnitEntity target, string skillName)
-    {
-        float energyBefore = _player.GetStat("Energy");
-        float playerHpBefore = _player.GetStat("HP");
-        var snapBefore = _enemies.Select(e => e.GetStat("HP")).ToArray();
-
-        bool ok = _player.TryCast(slot, target);
-        if (!ok)
-        {
-            Log($"[{skillName}] 失败（能量 {energyBefore:F0} 不足）");
-            return;
-        }
-
-        LogResult(skillName, energyBefore, playerHpBefore, snapBefore);
     }
 
     private void CastSkillByName(string abilityName, UnitEntity target, string skillName)
