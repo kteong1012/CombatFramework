@@ -11,11 +11,36 @@ public partial class UnitNode : Node2D
     public bool IsPlayer { get; set; }
     public float MoveSpeed { get; set; } = 200f;
 
-    /// <summary>普攻盒预览：offset(局部) + 全尺寸。设为 null 则不显示。</summary>
-    public (Godot.Vector2 offset, Godot.Vector2 size)? AttackBox { get; set; }
-
     private Color _bodyColor = Colors.CornflowerBlue;
     private float _maxHp = 1000f;
+
+    // ── 技能区域预览（0.3 秒淡出）────────────────────────
+    private float _skillAreaTimer;
+    private Godot.Vector2 _skillAreaOffset;
+    private Godot.Vector2 _skillAreaSize;
+    private float _skillAreaRadius;
+    private bool _skillAreaIsCircle;
+
+    /// <summary>显示盒形技能范围预览，0.3 秒后自动消失。</summary>
+    public void ShowSkillBoxPreview(Godot.Vector2 offset, Godot.Vector2 size)
+    {
+        GD.Print($"[UnitNode] ShowSkillBoxPreview offset=({offset.X:F0},{offset.Y:F0}) size=({size.X:F0},{size.Y:F0})");
+        _skillAreaTimer = 0.3f;
+        _skillAreaOffset = offset;
+        _skillAreaSize = size;
+        _skillAreaRadius = 0f;
+        _skillAreaIsCircle = false;
+    }
+
+    /// <summary>显示圆形技能范围预览，0.3 秒后自动消失。</summary>
+    public void ShowSkillCirclePreview(float radius)
+    {
+        _skillAreaTimer = 0.3f;
+        _skillAreaOffset = Godot.Vector2.Zero;
+        _skillAreaSize = Godot.Vector2.Zero;
+        _skillAreaRadius = radius;
+        _skillAreaIsCircle = true;
+    }
 
     public void Init(UnitEntity entity, Color color, float maxHp = 1000f, bool isPlayer = false)
     {
@@ -42,6 +67,11 @@ public partial class UnitNode : Node2D
                 Entity.Position = new System.Numerics.Vector3(Position.X, Position.Y, 0f);
             }
         }
+
+        // 技能区域预览计时器
+        if (_skillAreaTimer > 0f)
+            _skillAreaTimer -= (float)delta;
+
         QueueRedraw();
     }
 
@@ -53,13 +83,24 @@ public partial class UnitNode : Node2D
         bool  dead = hp <= 0f;
         var bodyColor = dead ? new Color(0.4f, 0.4f, 0.4f) : _bodyColor;
 
-        // 攻击盒预览（仅玩家，半透明橙色矩形）
-        if (IsPlayer && AttackBox.HasValue && !dead)
+        // 技能区域预览（0.3 秒淡出，亮青色）
+        if (_skillAreaTimer > 0f)
         {
-            var (boxOffset, boxSize) = AttackBox.Value;
-            var boxPos = boxOffset - boxSize * 0.5f;   // Rect2 左上角（局部坐标）
-            DrawRect(new Rect2(boxPos, boxSize), new Color(1f, 0.6f, 0.1f, 0.18f));
-            DrawRect(new Rect2(boxPos, boxSize), new Color(1f, 0.6f, 0.1f, 0.55f), filled: false, width: 1.5f);
+            float alpha = Mathf.Clamp(_skillAreaTimer / 0.3f, 0f, 1f);
+            var previewColor = new Color(0.2f, 0.9f, 1f, 0.25f * alpha);
+            var borderColor  = new Color(0.2f, 0.9f, 1f, 0.7f * alpha);
+
+            if (_skillAreaIsCircle)
+            {
+                DrawCircle(Godot.Vector2.Zero, _skillAreaRadius, previewColor);
+                DrawArc(Godot.Vector2.Zero, _skillAreaRadius, 0f, Mathf.Tau, 64, borderColor, 2f);
+            }
+            else
+            {
+                var boxPos2 = _skillAreaOffset - _skillAreaSize * 0.5f;
+                DrawRect(new Rect2(boxPos2, _skillAreaSize), previewColor);
+                DrawRect(new Rect2(boxPos2, _skillAreaSize), borderColor, filled: false, width: 2f);
+            }
         }
 
         // 身体圆形

@@ -1,18 +1,34 @@
 {
-    "Name": "skill_aoe",
-    "AbilityCosts": [
-        { "Stat": "Energy", "Value": { "$type": "const", "Value": 40.0 } }
+    "Name": "normal_attack_03",
+
+    "Transforms": [
+        {
+            "To": "normal_attack_03_ex",
+            "Condition": {
+                "$type": "CheckStat",
+                "StatName": "Player1_ExPoint",
+                "Op": "Gte",
+                "Value": 1.0,
+                "On": "Caster"
+            }
+        }
     ],
+
     "AbilityEvents": {
         "OnSpellStart": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "combo3_window"
+            },
             {
                 "$type": "ForEachHitActionData",
                 "Target": {
                     "$type": "BoxTargetSelector",
                     "Center": "Caster",
-                    "Offset":        { "X": 0.0, "Y": 0.0, "Z": 0.0 },
+                    "Offset":        { "X": 140.0, "Y": 0.0, "Z": 0.0 },
                     "EulerRotation": { "X": 0.0, "Y": 0.0, "Z": 0.0 },
-                    "Size":          { "X": 600.0, "Y": 400.0, "Z": 1.0 },
+                    "Size":          { "X": 360.0, "Y": 200.0, "Z": 1.0 },
                     "Teams": "All"
                 }
             }
@@ -25,7 +41,7 @@
                 "Damage": {
                     "$type": "kxb",
                     "BaseStat": "Atk",
-                    "K": { "$type": "const", "Value": 0.8 },
+                    "K": { "$type": "const", "Value": 1.0 },
                     "B": { "$type": "const", "Value": 0.0 }
                 },
                 "Teams": "Enemy"

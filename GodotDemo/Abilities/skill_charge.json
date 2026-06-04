@@ -1,0 +1,16 @@
+{
+    "Name": "skill_charge",
+    "AbilityCosts": [
+        { "Stat": "Energy", "Value": { "$type": "const", "Value": 50.0 } }
+    ],
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "ModifyStatActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "Stat": "Player1_ExPoint",
+                "Value": { "$type": "const", "Value": 3.0 }
+            }
+        ]
+    }
+}

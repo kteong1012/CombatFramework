@@ -8,6 +8,8 @@ using CombatFramework.Unit;
 /// <summary>
 /// Godot 端盒形查询实现（2D XY 平面）。
 /// 将目标坐标变换到盒的本地空间后做 AABB 判断。
+/// 同时实现 IShapeQueryService 的 ShowBoxPreview / ShowCirclePreview，
+/// 通过回调通知 BattleScene 在 UnitNode 上绘制半透明范围。
 /// <para>
 /// 参数语义（与 BoxTargetSelector 一致）：
 ///   center        — 施法者世界坐标
@@ -16,7 +18,7 @@ using CombatFramework.Unit;
 ///   size          — 盒的全尺寸（非半长），X = 宽，Y = 高
 /// </para>
 /// </summary>
-public class GodotShapeQueryService : IShapeQueryService
+public class GodotShapeQueryService : IShapeQueryService, IUnitQueryService
 {
     private readonly IReadOnlyList<UnitEntity> _units;
 
@@ -59,11 +61,44 @@ public class GodotShapeQueryService : IShapeQueryService
         }
     }
 
+    public IEnumerable<UnitEntity> QueryUnitsInRadius(
+        Vector3 center, float radius, TeamFilter teams, UnitEntity self)
+    {
+        float r2 = radius * radius;
+        foreach (var unit in _units)
+        {
+            if (unit == self) continue;
+            if (!MatchTeam(unit, self, teams)) continue;
+
+            float dx = unit.Position.X - center.X;
+            float dy = unit.Position.Y - center.Y;
+            if (dx * dx + dy * dy <= r2)
+                yield return unit;
+        }
+    }
+
     private static bool MatchTeam(UnitEntity unit, UnitEntity self, TeamFilter filter)
     {
         if (filter == TeamFilter.All) return true;
         bool isEnemy = unit.Team != self?.Team;
         return filter == TeamFilter.Enemy ? isEnemy : !isEnemy;
+    }
+
+    // ── 预览回调 ──────────────────────────────────────────────
+    /// <summary>BattleScene 设置此回调以在 UnitNode 上绘制范围预览。</summary>
+    public Action<Vector3, Vector3, Vector3> OnShowBoxPreview { get; set; }
+    public Action<Vector3, float> OnShowCirclePreview { get; set; }
+
+    public void ShowBoxPreview(Vector3 center, Vector3 offset, Vector3 eulerRotation, Vector3 size)
+    {
+        Godot.GD.Print($"[ShapeSvc] ShowBoxPreview center=({center.X:F0},{center.Y:F0}) offset=({offset.X:F0},{offset.Y:F0}) size=({size.X:F0},{size.Y:F0})");
+        OnShowBoxPreview?.Invoke(center, offset, size);
+    }
+
+    public void ShowCirclePreview(Vector3 center, float radius)
+    {
+        Godot.GD.Print($"[ShapeSvc] ShowCirclePreview center=({center.X:F0},{center.Y:F0}) radius={radius:F0}");
+        OnShowCirclePreview?.Invoke(center, radius);
     }
 }
 

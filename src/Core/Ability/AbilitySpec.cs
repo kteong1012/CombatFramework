@@ -97,6 +97,8 @@ public class AbilitySpec
     /// <summary>
     /// 按顺序枚举所有条件满足的转换目标 spec。
     /// 由 <see cref="Unit.UnitEntity.TryCast(AbilitySpec,Unit.UnitEntity)"/> 逐个尝试施放。
+    /// 转换目标通过 <see cref="AbilityTransformData.To"/> 指定技能名，
+    /// 由 caster.GetAbilitySpecByName 在已装备技能中查找。
     /// </summary>
     public IEnumerable<AbilitySpec> GetMatchingTransforms(UnitEntity caster, UnitEntity target)
     {
@@ -105,28 +107,10 @@ public class AbilitySpec
         {
             if (t.Condition == null || t.Condition.Evaluate(this, caster, target))
             {
-                var spec = GetOrCreateSubSpec(t.To);
+                var spec = caster.GetAbilitySpecByName(t.To);
                 if (spec != null) yield return spec;
             }
         }
-    }
-
-    // 子技能 spec 按需创建并缓存（每个 AbilitySpec 实例各自持有，避免跨实例污染）
-    private Dictionary<string, AbilitySpec> _subSpecs;
-
-    private AbilitySpec GetOrCreateSubSpec(string key)
-    {
-        if (string.IsNullOrEmpty(key) || data?.SubAbilities == null) return null;
-        _subSpecs ??= new Dictionary<string, AbilitySpec>();
-        if (!_subSpecs.TryGetValue(key, out var spec))
-        {
-            if (!data.SubAbilities.TryGetValue(key, out var subData)) return null;
-            spec = Create(subData);
-            spec.Owner = Owner;
-            spec.Level = Level;
-            _subSpecs[key] = spec;
-        }
-        return spec;
     }
 
     /// <summary>

@@ -52,6 +52,18 @@ public class UnitEntity
     public bool TryCast(SlotType slotType, UnitEntity target = null)
         => TryCast((int)slotType, target);
 
+    /// <summary>按技能名称查找已装备的 AbilitySpec。</summary>
+    public AbilitySpec GetAbilitySpecByName(string name) => AbilitySlots.Get(name);
+
+    /// <summary>
+    /// 按名称查找技能并尝试施放。找不到技能时返回 false。
+    /// </summary>
+    public bool TryCast(string abilityName, UnitEntity target = null)
+    {
+        var spec = GetAbilitySpecByName(abilityName);
+        return spec != null && TryCast(spec, target);
+    }
+
     /// <summary>
     /// 尝试施放指定槽位的技能。先评估 Transforms，再对最终技能执行 CanCast + DeductCosts。
     /// </summary>
@@ -73,6 +85,9 @@ public class UnitEntity
             if (TryCast(transformed, target))
                 return true;
         }
+
+        if (!ability.CanCast(out _))
+            return false;
 
         ability.DeductCosts();
 

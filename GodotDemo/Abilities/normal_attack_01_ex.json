@@ -1,18 +1,17 @@
 {
-    "Name": "skill_aoe",
+    "Name": "normal_attack_01_ex",
     "AbilityCosts": [
-        { "Stat": "Energy", "Value": { "$type": "const", "Value": 40.0 } }
+        { "Stat": "Player1_ExPoint", "Value": { "$type": "const", "Value": 1.0 } }
     ],
+
     "AbilityEvents": {
         "OnSpellStart": [
             {
                 "$type": "ForEachHitActionData",
                 "Target": {
-                    "$type": "BoxTargetSelector",
+                    "$type": "AreaTargetSelector",
                     "Center": "Caster",
-                    "Offset":        { "X": 0.0, "Y": 0.0, "Z": 0.0 },
-                    "EulerRotation": { "X": 0.0, "Y": 0.0, "Z": 0.0 },
-                    "Size":          { "X": 600.0, "Y": 400.0, "Z": 1.0 },
+                    "Radius": 140.0,
                     "Teams": "All"
                 }
             }

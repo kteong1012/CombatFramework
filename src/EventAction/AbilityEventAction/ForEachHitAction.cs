@@ -1,6 +1,8 @@
 using CombatFramework.Core;
 using CombatFramework.Core.Ability.AbilityEvent;
+using CombatFramework.Core.Enums;
 using CombatFramework.Core.Model;
+using System.Numerics;
 
 /// <summary>
 /// 对目标选择器返回的每个 unit 触发 ability.OnHitTarget。
@@ -18,6 +20,9 @@ public class ForEachHitAction : AbilityEventAction
 
     public override void Execute(AbilityEventContext context)
     {
+        // ── 范围预览：形状类选择器 → Bridge 通知游戏侧显示可视化 ──
+        ShowAreaPreviewIfNeeded(data.Target, context);
+
         foreach (var target in data.Target.Resolve(context))
         {
             var hitCtx = new AbilityEventContext
@@ -28,6 +33,45 @@ public class ForEachHitAction : AbilityEventAction
             };
             context.Ability.OnHitTarget(hitCtx);
         }
+    }
+
+    private static void ShowAreaPreviewIfNeeded(TargetSelector selector, AbilityEventContext context)
+    {
+        var shapeQuery = CFServices.ShapeQuery;
+        if (shapeQuery == null) { CFLog.Warning("[Preview] CFServices.ShapeQuery is null"); return; }
+        if (selector == null)   { CFLog.Warning("[Preview] TargetSelector is null"); return; }
+
+        switch (selector)
+        {
+            case BoxTargetSelector box:
+                CFLog.Info($"[Preview] Box: offset=({box.Offset.X},{box.Offset.Y}) size=({box.Size.X},{box.Size.Y})");
+                if (box.Size.X >= 5000f || box.Size.Y >= 5000f) { CFLog.Info("[Preview] skipped (fullscreen)"); return; }
+                shapeQuery.ShowBoxPreview(
+                    GetSelectorCenter(box.Center, context),
+                    box.Offset, box.EulerRotation, box.Size);
+                break;
+
+            case AreaTargetSelector area:
+                CFLog.Info($"[Preview] Circle: radius={area.Radius}");
+                if (area.Radius >= 5000f) { CFLog.Info("[Preview] skipped (fullscreen)"); return; }
+                shapeQuery.ShowCirclePreview(
+                    GetSelectorCenter(area.Center, context), area.Radius);
+                break;
+
+            default:
+                CFLog.Info($"[Preview] Unknown selector type: {selector.GetType().Name}");
+                break;
+        }
+    }
+
+    private static Vector3 GetSelectorCenter(TargetType centerType, AbilityEventContext context)
+    {
+        return centerType switch
+        {
+            TargetType.Target => context.Target?.Position ?? context.Caster?.Position ?? Vector3.Zero,
+            TargetType.Owner  => context.Ability?.Owner?.Position ?? context.Caster?.Position ?? Vector3.Zero,
+            _                 => context.Caster?.Position ?? Vector3.Zero,
+        };
     }
 }
 

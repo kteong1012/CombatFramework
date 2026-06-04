@@ -2,6 +2,7 @@ using Godot;
 using CombatFramework.Bridge;
 using CombatFramework.Core;
 using CombatFramework.Core.Ability;
+using CombatFramework.Core.Ability.AbilityEvent;
 using CombatFramework.Core.Enums;
 using CombatFramework.Core.Model;
 using CombatFramework.Unit;
@@ -48,6 +49,7 @@ public partial class BattleScene : Node2D
         _player.Stats.Set("Energy", 100f);
         _player.Stats.Set("DefFinal", 0f);
         _player.Stats.Set("HP", MaxHp);
+        _player.Stats.Set("Player1_ExPoint", 0f);
 
         // ── 3 个敌人 ──────────────────────────────────────
         for (int i = 0; i < 3; i++)
@@ -61,19 +63,28 @@ public partial class BattleScene : Node2D
         // ── ShapeQuery 注入（所有 unit）──────────────────
         var allUnits = new List<UnitEntity> { _player };
         allUnits.AddRange(_enemies);
-        CFServices.ShapeQuery = new GodotShapeQueryService(allUnits);
+        var shapeSvc = new GodotShapeQueryService(allUnits);
+        CFServices.ShapeQuery = shapeSvc;
+        CFServices.UnitQuery  = shapeSvc;
+        shapeSvc.OnShowBoxPreview = HandleBoxPreview;
+        shapeSvc.OnShowCirclePreview = HandleCirclePreview;
 
         // ── 技能装备 ──────────────────────────────────────
         _player.AbilitySlots.Equip(SlotType.Passive0,  AbilitySpec.Create(LoadAbility("test_passive_atk_bonus.json")));
-        _player.AbilitySlots.Equip(SlotType.NormalAtk, AbilitySpec.Create(LoadAbility("test_active_attack.json")));
+        _player.AbilitySlots.Equip(SlotType.NormalAtk, AbilitySpec.Create(LoadAbility("normal_attack_01.json")));
         _player.AbilitySlots.Equip(SlotType.Skill,     AbilitySpec.Create(LoadAbility("skill_aoe.json")));
-        _player.AbilitySlots.Equip(SlotType.Burst,     AbilitySpec.Create(LoadAbility("skill_drain.json")));
+        _player.AbilitySlots.Equip(SlotType.Burst,     AbilitySpec.Create(LoadAbility("skill_charge.json")));
+        // 连击后续段——不可见槽位，仅通过 Transform 按名查找
+        _player.AbilitySlots.Equip(SlotType.Const0,    AbilitySpec.Create(LoadAbility("normal_attack_02.json")));
+        _player.AbilitySlots.Equip(SlotType.Const1,    AbilitySpec.Create(LoadAbility("normal_attack_03.json")));
+        // 强化普攻——不可见槽位，通过 ExPoint transform 按名查找
+        _player.AbilitySlots.Equip(SlotType.Const2,    AbilitySpec.Create(LoadAbility("normal_attack_01_ex.json")));
+        _player.AbilitySlots.Equip(SlotType.Const3,    AbilitySpec.Create(LoadAbility("normal_attack_02_ex.json")));
+        _player.AbilitySlots.Equip(SlotType.Const4,    AbilitySpec.Create(LoadAbility("normal_attack_03_ex.json")));
 
         // ── 绑定 Node ──────────────────────────────────────
         _playerNode = GetNode<UnitNode>("PlayerUnit");
         _playerNode.Init(_player, Colors.CornflowerBlue, MaxHp, isPlayer: true);
-        // 普攻盒预览：offset(120,0)，size(240×160)，与 test_active_attack.json 一致
-        _playerNode.AttackBox = (new Godot.Vector2(120f, 0f), new Godot.Vector2(240f, 160f));
         // 同步初始世界坐标到 Entity
         _player.Position = new System.Numerics.Vector3(_playerNode.Position.X, _playerNode.Position.Y, 0f);
 
@@ -101,9 +112,9 @@ public partial class BattleScene : Node2D
 
         switch (key.Keycode)
         {
-            case Key.Z: CastSkill(SlotType.NormalAtk, target, "普攻"); break;
+            case Key.Z: CastSkillByName("normal_attack_01", target, "普攻"); break;
             case Key.X: CastSkill(SlotType.Skill,     target, "AOE");  break;
-            case Key.C: CastSkill(SlotType.Burst,     target, "吸血"); break;
+            case Key.C: CastSkill(SlotType.Burst,     target, "充能"); break;
             case Key.R: ResetBattle(); break;
         }
     }
@@ -120,6 +131,28 @@ public partial class BattleScene : Node2D
             Log($"[{skillName}] 失败（能量 {energyBefore:F0} 不足）");
             return;
         }
+
+        LogResult(skillName, energyBefore, playerHpBefore, snapBefore);
+    }
+
+    private void CastSkillByName(string abilityName, UnitEntity target, string skillName)
+    {
+        float energyBefore = _player.GetStat("Energy");
+        float playerHpBefore = _player.GetStat("HP");
+        var snapBefore = _enemies.Select(e => e.GetStat("HP")).ToArray();
+
+        bool ok = _player.TryCast(abilityName, target);
+        if (!ok)
+        {
+            Log($"[{skillName}] 失败");
+            return;
+        }
+
+        LogResult(skillName, energyBefore, playerHpBefore, snapBefore);
+    }
+
+    private void LogResult(string skillName, float energyBefore, float playerHpBefore, float[] snapBefore)
+    {
 
         // 统计总伤害
         float totalDmg = 0f;
@@ -144,6 +177,22 @@ public partial class BattleScene : Node2D
         }
     }
 
+    // ── 范围预览回调（由 GodotShapeQueryService → ForEachHitAction 触发）──
+
+    private void HandleBoxPreview(System.Numerics.Vector3 center, System.Numerics.Vector3 offset, System.Numerics.Vector3 size)
+    {
+        GD.Print($"[BattleScene] HandleBoxPreview offset=({offset.X:F0},{offset.Y:F0}) size=({size.X:F0},{size.Y:F0})");
+        _playerNode?.ShowSkillBoxPreview(
+            new Godot.Vector2(offset.X, offset.Y),
+            new Godot.Vector2(size.X, size.Y));
+    }
+
+    private void HandleCirclePreview(System.Numerics.Vector3 center, float radius)
+    {
+        GD.Print($"[BattleScene] HandleCirclePreview radius={radius:F0}");
+        _playerNode?.ShowSkillCirclePreview(radius);
+    }
+
     private void ResetBattle()
     {
         foreach (var e in _enemies) e.Stats.Set("HP", EnemyHp);
@@ -154,6 +203,12 @@ public partial class BattleScene : Node2D
 
     public override void _Process(double delta)
     {
+        float dt = (float)delta;
+
+        // ── 框架更新（modifier 过期等）──
+        _player.Update(dt);
+        foreach (var e in _enemies) e.Update(dt);
+
         float hp     = _player.GetStat("HP");
         float energy = _player.GetStat("Energy");
 

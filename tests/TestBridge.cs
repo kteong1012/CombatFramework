@@ -73,5 +73,8 @@ public sealed class TestShapeQueryService : IShapeQueryService
             yield return unit;
         }
     }
+
+    public void ShowBoxPreview(Vector3 center, Vector3 offset, Vector3 eulerRotation, Vector3 size) { }
+    public void ShowCirclePreview(Vector3 center, float radius) { }
 }
 

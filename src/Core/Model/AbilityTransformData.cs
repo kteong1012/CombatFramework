@@ -9,7 +9,7 @@ namespace CombatFramework.Core.Model;
 public class AbilityTransformData
 {
     /// <summary>
-    /// 转换目标：引用 <see cref="AbilityData.SubAbilities"/> 中的 key。
+    /// 转换目标技能名。通过 caster.GetAbilitySpecByName 在已装备技能中查找。
     /// </summary>
     public string To { get; set; }
 

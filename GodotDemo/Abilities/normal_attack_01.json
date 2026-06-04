@@ -1,0 +1,76 @@
+{
+    "Name": "normal_attack_01",
+
+    "Transforms": [
+        {
+            "To": "normal_attack_03",
+            "Condition": {
+                "$type": "HasModifier",
+                "ModifierName": "combo3_window",
+                "On": "Caster"
+            }
+        },
+        {
+            "To": "normal_attack_02",
+            "Condition": {
+                "$type": "HasModifier",
+                "ModifierName": "combo2_window",
+                "On": "Caster"
+            }
+        },
+        {
+            "To": "normal_attack_01_ex",
+            "Condition": {
+                "$type": "CheckStat",
+                "StatName": "Player1_ExPoint",
+                "Op": "Gte",
+                "Value": 1.0,
+                "On": "Caster"
+            }
+        }
+    ],
+
+    "AbilityModifiers": {
+        "combo2_window": {
+            "Name": "combo2_window",
+            "DurationGetter": { "$type": "const", "Value": 0.8 },
+            "IsHidden": true,
+            "IsPurgable": false
+        }
+    },
+
+    "AbilityEvents": {
+        "OnSpellStart": [
+            {
+                "$type": "ForEachHitActionData",
+                "Target": {
+                    "$type": "BoxTargetSelector",
+                    "Center": "Caster",
+                    "Offset":        { "X": 100.0, "Y": 0.0, "Z": 0.0 },
+                    "EulerRotation": { "X": 0.0, "Y": 0.0, "Z": 0.0 },
+                    "Size":          { "X": 200.0, "Y": 120.0, "Z": 1.0 },
+                    "Teams": "All"
+                }
+            },
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                "ModifierName": "combo2_window"
+            }
+        ],
+        "OnHitTarget": [
+            {
+                "$type": "DamageActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Target" },
+                "Element": "FIRE",
+                "Damage": {
+                    "$type": "kxb",
+                    "BaseStat": "Atk",
+                    "K": { "$type": "const", "Value": 0.5 },
+                    "B": { "$type": "const", "Value": 0.0 }
+                },
+                "Teams": "Enemy"
+            }
+        ]
+    }
+}

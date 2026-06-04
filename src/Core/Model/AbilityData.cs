@@ -41,7 +41,8 @@ public partial class AbilityData
 
     /// <summary>
     /// 技能转换列表。在 CheckCost 之前按顺序评估，首个满足条件的转换生效。
-    /// 转换目标通过 <see cref="AbilityTransformData.To"/> 引用 <see cref="SubAbilities"/> 中的 key。
+    /// 转换目标通过 <see cref="AbilityTransformData.To"/> 指定技能名，
+    /// 由 caster.GetAbilitySpecByName 在已装备技能中查找。
     /// </summary>
     public List<AbilityTransformData> Transforms;
     #endregion

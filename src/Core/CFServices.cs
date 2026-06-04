@@ -23,6 +23,12 @@ public interface IShapeQueryService
     IEnumerable<UnitEntity> QueryBox(
         Vector3 center, Vector3 offset, Vector3 eulerRotation, Vector3 size,
         TeamFilter teams, UnitEntity self);
+
+    /// <summary>盒形技能范围预览。游戏侧实现可视化（如 0.3 秒半透明矩形），测试端空实现。</summary>
+    void ShowBoxPreview(Vector3 center, Vector3 offset, Vector3 eulerRotation, Vector3 size);
+
+    /// <summary>圆形技能范围预览。游戏侧实现可视化（如 0.3 秒半透明圆），测试端空实现。</summary>
+    void ShowCirclePreview(Vector3 center, float radius);
 }
 
 /// <summary>
