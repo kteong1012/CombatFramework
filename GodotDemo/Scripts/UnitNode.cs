@@ -148,5 +148,15 @@ public partial class UnitNode : Node2D
         float ratio = Mathf.Clamp(hp / _maxHp, 0f, 1f);
         DrawRect(new Rect2(-36f, -56f, 72f * ratio, 10f), ratio > 0.5f ? Colors.LimeGreen : Colors.OrangeRed);
         DrawString(ThemeDB.FallbackFont, new Godot.Vector2(-36f, -60f), $"{hp:F0}/{_maxHp:F0}", fontSize: 12);
+
+        // ── 韧性条（仅敌人显示）──
+        float tough = Entity.GetStat("Toughness");
+        float toughMax = Entity.GetStat("ToughnessMax");
+        if (!IsPlayer && toughMax > 0f)
+        {
+            float toughRatio = Mathf.Clamp(tough / toughMax, 0f, 1f);
+            DrawRect(new Rect2(-36f, -70f, 72f, 6f), new Color(0.15f, 0.15f, 0.15f));
+            DrawRect(new Rect2(-36f, -70f, 72f * toughRatio, 6f), new Color(0.95f, 0.65f, 0.15f));
+        }
     }
 }

@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/BattleScene.cs" id="1"]
 [ext_resource type="Script" path="res://Scripts/UnitNode.cs" id="2"]
 [ext_resource type="Script" path="res://Scripts/UI/HUD.cs" id="3"]
+[ext_resource type="Script" path="res://Scripts/UI/TrainingPanel.cs" id="4"]
 
 [node name="BattleScene" type="Node2D"]
 script = ExtResource("1")
@@ -72,3 +73,53 @@ offset_top = 10.0
 offset_right = 790.0
 offset_bottom = 195.0
 autowrap_mode = 3
+
+[node name="StatsPanel" type="Control" parent="UI/HUD"]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -160.0
+offset_top = 60.0
+offset_right = -10.0
+offset_bottom = 170.0
+mouse_filter = 2
+
+[node name="TrainingPanel" type="Control" parent="UI"]
+script = ExtResource("4")
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 10.0
+offset_top = 205.0
+offset_right = 150.0
+offset_bottom = 270.0
+
+[node name="EnergyLock" type="Button" parent="UI/TrainingPanel"]
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 140.0
+offset_bottom = 32.0
+text = "能量: 正常"
+
+[node name="Invincible" type="Button" parent="UI/TrainingPanel"]
+offset_left = 0.0
+offset_top = 36.0
+offset_right = 140.0
+offset_bottom = 68.0
+text = "敌人: 正常"
+
+[node name="ResetEnemy" type="Button" parent="UI/TrainingPanel"]
+offset_left = 0.0
+offset_top = 72.0
+offset_right = 140.0
+offset_bottom = 104.0
+text = "重置敌人"
+
+[node name="ResetStats" type="Button" parent="UI/TrainingPanel"]
+offset_left = 0.0
+offset_top = 108.0
+offset_right = 140.0
+offset_bottom = 140.0
+text = "重置统计"

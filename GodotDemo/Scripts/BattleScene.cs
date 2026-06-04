@@ -5,10 +5,11 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// ARPG 战斗主场景 — 组装所有系统，驱动帧循环。
+/// ARPG 训练场 — 组装所有系统，驱动帧循环。
 ///   玩家 WASD 移动 | Z 普攻 | X AOE | C 充能 | R 重置 | T 清日志
-///   3 个敌人，全部死亡后自动重置。
-///   底部命座按钮 1~6：点击解锁对应命座。
+///   3 个敌人带韧性条，全部死亡后自动重置。
+///   右上角命座按钮 1~6：点击/键盘解锁。
+///   左上角训练面板：能量锁定、敌人无敌、重置。
 /// </summary>
 public partial class BattleScene : Node2D
 {
@@ -17,11 +18,14 @@ public partial class BattleScene : Node2D
     private UnitNode _playerNode;
     private readonly List<UnitNode> _enemyNodes = new();
     private HUD _hud;
+    private TrainingPanel _trainingPanel;
     private ConstellationManager _constellation;
+    private DamageTracker _damageTracker = new();
 
     private const float MaxHp = 1000f;
     private const float EnemyHp = 600f;
     private const float MaxEnergy = 100f;
+    private const float EnemyToughness = 300f;
 
     public override void _Ready()
     {
@@ -33,7 +37,7 @@ public partial class BattleScene : Node2D
         InitNodes();
         InitHud();
 
-        _hud.Log($"战斗开始！ATK={_player.GetStat("Atk"):F0}  [Z]普攻 [X]AOE [C]充能 [1~6]命座 [WASD]移动 [R]重置 [T]清Log");
+        _hud.Log($"训练场就绪  ATK={_player.GetStat("Atk"):F0}  [Z]普攻 [X]AOE [C]充能 [1~6]命座 [WASD]移动 [R]重置 [T]清Log");
     }
 
     // ════════════════════════════════════════════════════════
@@ -53,6 +57,8 @@ public partial class BattleScene : Node2D
             var e = new UnitEntity { Team = TeamFlag.Enemy };
             e.Stats.Set("HP", EnemyHp);
             e.Stats.Set("DefFinal", 0f);
+            e.Stats.Set("ToughnessMax", EnemyToughness);
+            e.Stats.Set("Toughness", EnemyToughness);
             _enemies.Add(e);
         }
     }
@@ -107,6 +113,10 @@ public partial class BattleScene : Node2D
         _hud.Battle = this;
         _hud.Init(_player);
         _hud.OnUnlockConstellation += UnlockConstellation;
+
+        _trainingPanel = GetNode<TrainingPanel>("UI/TrainingPanel");
+        _trainingPanel.OnResetEnemy += ResetEnemies;
+        _trainingPanel.OnResetStats += () => _damageTracker.Reset();
     }
 
     // ════════════════════════════════════════════════════════
@@ -151,8 +161,11 @@ public partial class BattleScene : Node2D
 
     private void Cast(string abilityName, UnitEntity target, string skillName)
     {
-        float hpBefore = _player.GetStat("HP");
         var hpSnap = _enemies.Select(e => e.GetStat("HP")).ToArray();
+
+        // 无敌模式：先锁定敌人 HP
+        if (TrainingConfig.EnemyInvincible)
+            foreach (var e in _enemies) e.Stats.Set("HP", EnemyHp);
 
         bool ok = _player.TryCast(abilityName, target);
         if (!ok)
@@ -161,16 +174,20 @@ public partial class BattleScene : Node2D
             return;
         }
 
+        // 统计伤害
         float totalDmg = 0f;
         for (int i = 0; i < _enemies.Count; i++)
-            totalDmg += hpSnap[i] - _enemies[i].GetStat("HP");
+        {
+            float dmg = hpSnap[i] - _enemies[i].GetStat("HP");
+            if (dmg > 0f) totalDmg += dmg;
+        }
+        if (totalDmg > 0f)
+            _damageTracker.Record(totalDmg, isCrit: false); // isCrit 可从 DamageContext 获取，简化处理
 
-        float heal = _player.GetStat("HP") - hpBefore;
         float atk = _player.GetStat("Atk");
-
         var parts = new List<string>();
         if (totalDmg > 0f) parts.Add($"伤害 {totalDmg:F0}");
-        if (heal > 0f)     parts.Add($"回血 +{heal:F0}");
+        if (totalDmg > 0f) parts.Add($"DPS {_damageTracker.Dps:F0}");
 
         _hud.Log($"[{skillName}] ATK={atk:F0}  {string.Join("  ", parts)}");
 
@@ -181,19 +198,29 @@ public partial class BattleScene : Node2D
     {
         if (_enemies.All(e => e.GetStat("HP") <= 0f))
         {
-            _hud.Log("── 全灭！3秒后重置 ──");
+            _hud.Log("── 全灭！3秒后自动重置 ──");
             GetTree().CreateTimer(3.0).Timeout += ResetBattle;
         }
     }
 
     private void ResetBattle()
     {
-        foreach (var e in _enemies) e.Stats.Set("HP", EnemyHp);
+        ResetEnemies();
         _player.Stats.Set("HP", MaxHp);
         _player.Stats.Set("Energy", MaxEnergy);
-        foreach (var e in _enemies) e.ModifierManager.ActivateAll();
         _player.ModifierManager.ActivateAll();
+        _damageTracker.Reset();
         _hud.Log("── 战场已重置 ──");
+    }
+
+    private void ResetEnemies()
+    {
+        foreach (var e in _enemies)
+        {
+            e.Stats.Set("HP", EnemyHp);
+            e.Stats.Set("Toughness", EnemyToughness);
+            e.ModifierManager.ActivateAll();
+        }
     }
 
     // ════════════════════════════════════════════════════════
@@ -207,10 +234,17 @@ public partial class BattleScene : Node2D
         _player.Update(dt);
         foreach (var e in _enemies) e.Update(dt);
 
+        // ── 训练模式 ──
+        if (TrainingConfig.EnergyLock)
+            _player.Stats.Set("Energy", MaxEnergy);
+
+        _damageTracker.Update(dt);
+
         _hud.Update(
             hp: _player.GetStat("HP"), maxHp: MaxHp,
             energy: _player.GetStat("Energy"), maxEnergy: MaxEnergy,
             constellationUnlocked: _constellation.Unlocked);
+        _hud.UpdateStatsPanel(_damageTracker);
     }
 
     // ════════════════════════════════════════════════════════

@@ -25,6 +25,13 @@ public partial class HUD : Control
     private const int ConstellationCount = 6;
     private readonly Button[] _constButtons = new Button[ConstellationCount];
 
+    // ── 伤害统计标签 ──
+    private Label _dpsLabel;
+    private Label _totalDmgLabel;
+    private Label _hitCountLabel;
+    private Label _highestLabel;
+    private Label _critLabel;
+
     // ── 日志 ──
     private Label _logLabel;
 
@@ -37,11 +44,13 @@ public partial class HUD : Control
         var bars = GetNode<Control>("Bars");
         var skillBar = GetNode<Control>("SkillBar");
         var constBar = GetNode<Control>("ConstellationBar");
+        var statsPanel = GetNode<Control>("StatsPanel");
         _logLabel = GetNode<Label>("Log");
 
         BuildStatusBars(bars);
         BuildSkillBar(skillBar);
         BuildConstellationBar(constBar);
+        BuildStatsPanel(statsPanel);
     }
 
     // ════════════════════════════════════════════════════════
@@ -53,6 +62,20 @@ public partial class HUD : Control
         UpdateBars(hp, maxHp, energy, maxEnergy);
         UpdateSkillSlots(energy);
         UpdateConstellationButtons(constellationUnlocked);
+    }
+
+    public void UpdateStatsPanel(DamageTracker tracker)
+    {
+        if (_dpsLabel != null)
+            _dpsLabel.Text = $"DPS: {tracker.Dps:F0}";
+        if (_totalDmgLabel != null)
+            _totalDmgLabel.Text = $"总伤: {tracker.TotalDamage:F0}";
+        if (_highestLabel != null)
+            _highestLabel.Text = $"最高: {tracker.HighestHit:F0}";
+        if (_hitCountLabel != null)
+            _hitCountLabel.Text = $"命中: {tracker.HitCount}";
+        if (_critLabel != null)
+            _critLabel.Text = $"暴击: {tracker.CritCount} ({(tracker.HitCount > 0 ? tracker.CritCount * 100f / tracker.HitCount : 0f):F0}%)";
     }
 
     private void UpdateBars(float hp, float maxHp, float energy, float maxEnergy)
@@ -213,6 +236,32 @@ public partial class HUD : Control
             parent.AddChild(btn);
             _constButtons[i] = btn;
         }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // 构建 — 伤害统计面板
+    // ════════════════════════════════════════════════════════
+
+    private void BuildStatsPanel(Control parent)
+    {
+        const float x = 0f, rowH = 18f;
+        float y = 0f;
+        var titleColor = new Color(0.9f, 0.7f, 0.2f);
+
+        _dpsLabel = MakeLabel("DPS: 0", x, y, 14, titleColor);
+        parent.AddChild(_dpsLabel);
+
+        _totalDmgLabel = MakeLabel("总伤: 0", x, y + rowH, 12, Colors.White);
+        parent.AddChild(_totalDmgLabel);
+
+        _highestLabel = MakeLabel("最高: 0", x, y + rowH * 2, 12, new Color(1f, 0.5f, 0.3f));
+        parent.AddChild(_highestLabel);
+
+        _hitCountLabel = MakeLabel("命中: 0", x, y + rowH * 3, 12, Colors.LightGray);
+        parent.AddChild(_hitCountLabel);
+
+        _critLabel = MakeLabel("暴击: 0 (0%)", x, y + rowH * 4, 12, new Color(1f, 0.85f, 0.2f));
+        parent.AddChild(_critLabel);
     }
 
     // ════════════════════════════════════════════════════════
