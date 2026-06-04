@@ -1,5 +1,6 @@
 {
     "Name": "normal_attack_02_ex",
+    "Tags": ["skill_type_normal_atk"],
 
     "AbilityModifiers": {
         "combo3_window": {

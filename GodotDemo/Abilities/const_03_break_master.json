@@ -1,0 +1,30 @@
+{
+    "Name": "const_03_break_master",
+    "AbilityEvents": {
+        "OnEquipped": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_break_master"
+            }
+        ],
+        "OnUnequipped": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_break_master"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_break_master": {
+            "Name": "mod_break_master",
+            "IsBuff": true,
+            "StackMode": "Permanent",
+            "EffectName": "const_glow",
+            "Properties": [
+                { "Stat": "BreakDmgBonus", "Op": "Add", "Value": { "$type": "const", "Value": 0.3 } }
+            ]
+        }
+    }
+}

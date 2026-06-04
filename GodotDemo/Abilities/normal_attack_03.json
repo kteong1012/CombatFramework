@@ -1,5 +1,6 @@
 {
     "Name": "normal_attack_03",
+    "Tags": ["skill_type_normal_atk"],
 
     "Transforms": [
         {

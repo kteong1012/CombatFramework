@@ -1,5 +1,6 @@
 {
     "Name": "skill_charge",
+    "Tags": ["skill_type_burst"],
     "AbilityCosts": [
         { "Stat": "Energy", "Value": { "$type": "const", "Value": 50.0 } }
     ],

@@ -1,0 +1,6 @@
+{
+    "Name": "const_02_normal_enhance",
+    "SkillBonusEntries": [
+        { "TargetFlag": "skill_type_normal_atk", "LevelBonus": 2 }
+    ]
+}

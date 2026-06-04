@@ -1,5 +1,6 @@
 {
     "Name": "normal_attack_03_ex",
+    "Tags": ["skill_type_normal_atk"],
 
     "AbilityEvents": {
         "OnSpellStart": [

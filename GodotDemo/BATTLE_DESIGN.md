@@ -99,20 +99,14 @@ var skill = _player.GetAbilitySpecByName("skill_name");
 
 部分命座的被动效果为：**令所有带有特定 Flag 的技能等级 +N**。
 
-#### 数据配置（可配置，JSON）
+#### 数据配置（JSON）
 
-```json
+```jsonc
 {
-  "id": "const_2",
-  "events": {
-    "OnEquip": [
-      {
-        "$type": "SkillLevelBonusAction",
-        "TargetFlag": "skill_type_burst",
-        "LevelBonus": 3
-      }
+    "Name": "const_01_skill_enhance",
+    "SkillBonusEntries": [
+        { "TargetFlag": "skill_type_burst", "LevelBonus": 1 }
     ]
-  }
 }
 ```
 
@@ -122,14 +116,40 @@ var skill = _player.GetAbilitySpecByName("skill_name");
 
 ```
 技能等级求值时（GetEffectiveLevel）
-  → 遍历 unit 所有已装备命座/被动槽
-  → 收集 SkillBonus 中 TargetFlag 匹配当前技能 tags 的所有 LevelBonus
+  → 遍历 unit Abilities.Values
+  → 收集 SkillBonusEntries 中 TargetFlag 匹配当前技能 Tags 的所有 LevelBonus
   → EffectiveLevel = BaseLevel + Σ LevelBonus
 ```
 
-- 无需在装备时修改 `BaseLevel`，避免状态污染
-- 命座永不卸载，汇总结果恒增不减
-- 同一技能可被多个命座叠加升级
+#### Demo 中已实现的 6 个命座
+
+| 命座 | 文件 | 效果 |
+|------|------|------|
+| C1 | `const_01_skill_enhance.json` | 战技等级 +1（SkillBonus: `skill_type_burst`） |
+| C2 | `const_02_normal_enhance.json` | 普攻等级 +2（SkillBonus: `skill_type_normal_atk`） |
+| C3 | `const_03_break_master.json` | 破韧增伤 +30%（Permanent Modifier） |
+| C4 | `const_04_energy_surge.json` | 击杀回能 20（OnDeath 事件回能） |
+| C5 | `const_05_all_enhance.json` | 全技能等级 +1（双 SkillBonus） |
+| C6 | `const_06_crit_master.json` | 暴击率 +20%，暴伤 +50%（Permanent Modifier） |
+
+### 2.4 Demo 代码架构
+
+```
+GodotDemo/Scripts/
+├── BattleScene.cs              — 主场景（组装 + 帧循环，~200 行）
+├── Game/
+│   ├── HeroConfig.cs           — 角色配置（属性/技能列表/命座列表）
+│   └── AbilityLoader.cs        — JSON 能力加载器
+├── Constellation/
+│   └── ConstellationManager.cs — 命座解锁/装备管理
+├── UI/
+│   └── HUD.cs                  — 全部 UI（HP条/能量条/技能槽/命座按钮/日志）
+├── UnitNode.cs                 — 单位可视化
+└── Bridge/
+    ├── GodotCFBridge.cs
+    ├── GodotShapeQueryService.cs
+    └── GodotVfxService.cs
+```
 
 ---
 

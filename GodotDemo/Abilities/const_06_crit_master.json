@@ -1,0 +1,31 @@
+{
+    "Name": "const_06_crit_master",
+    "AbilityEvents": {
+        "OnEquipped": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_crit_master"
+            }
+        ],
+        "OnUnequipped": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_crit_master"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_crit_master": {
+            "Name": "mod_crit_master",
+            "IsBuff": true,
+            "StackMode": "Permanent",
+            "EffectName": "const_glow",
+            "Properties": [
+                { "Stat": "CritRate", "Op": "Add", "Value": { "$type": "const", "Value": 20.0 } },
+                { "Stat": "CritDMG", "Op": "Add", "Value": { "$type": "const", "Value": 0.5 } }
+            ]
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "Name": "const_01_skill_enhance",
+    "SkillBonusEntries": [
+        { "TargetFlag": "skill_type_burst", "LevelBonus": 1 }
+    ]
+}

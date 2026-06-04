@@ -1,0 +1,37 @@
+{
+    "Name": "const_04_energy_surge",
+    "AbilityEvents": {
+        "OnEquipped": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_energy_surge"
+            }
+        ],
+        "OnUnequipped": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "mod_energy_surge"
+            }
+        ]
+    },
+    "AbilityModifiers": {
+        "mod_energy_surge": {
+            "Name": "mod_energy_surge",
+            "IsBuff": true,
+            "IsHidden": true,
+            "StackMode": "Permanent",
+            "Events": {
+                "OnDeath": [
+                    {
+                        "$type": "ModifyStatActionData",
+                        "Target": { "$type": "SingleTargetSelector", "Type": "Caster" },
+                        "Stat": "Energy",
+                        "Value": { "$type": "const", "Value": 20.0 }
+                    }
+                ]
+            }
+        }
+    }
+}
