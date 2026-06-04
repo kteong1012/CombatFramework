@@ -1,0 +1,21 @@
+{
+    "Name": "玩家",
+    "Hp": 1000,
+    "AtkBase": 200,
+    "DefFinal": 0,
+    "MaxEnergy": 100,
+    "MoveSpeed": 200,
+    "Abilities": [
+        "test_passive_atk_bonus.json",
+        "normal_attack_01.json",
+        "skill_aoe.json",
+        "skill_charge.json",
+        "normal_attack_02.json",
+        "normal_attack_03.json",
+        "normal_attack_01_ex.json",
+        "normal_attack_02_ex.json",
+        "normal_attack_03_ex.json"
+    ],
+    "Constellations": [3001, 3002, 3003, 3004, 3005, 3006],
+    "BodyColor": [0.4, 0.6, 0.9]
+}

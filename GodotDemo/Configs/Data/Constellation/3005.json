@@ -1,0 +1,5 @@
+{
+    "Name": "全技能增强",
+    "Desc": "战技+普攻各 +1 级",
+    "AbilityFile": "const_05_all_enhance.json"
+}

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
-/// ARPG 训练场 — 组装所有系统，驱动帧循环。
+/// ARPG 训练场 — 配置驱动，组装所有系统，驱动帧循环。
 ///   玩家 WASD 移动 | Z 普攻 | X AOE | C 充能 | R 重置 | T 清日志
 ///   3 个敌人带韧性条，全部死亡后自动重置。
 ///   右上角命座按钮 1~6：点击/键盘解锁。
@@ -22,14 +22,17 @@ public partial class BattleScene : Node2D
     private ConstellationManager _constellation;
     private DamageTracker _damageTracker = new();
 
-    private const float MaxHp = 1000f;
-    private const float EnemyHp = 600f;
-    private const float MaxEnergy = 100f;
-    private const float EnemyToughness = 300f;
+    private UnitConfig _playerCfg;
+    private UnitConfig _enemyCfg;
 
     public override void _Ready()
     {
         CFBridge.Initialize(new GodotCFBridge());
+        HeroConfig.Init();
+
+        _playerCfg = HeroConfig.GetUnit(HeroConfig.PlayerKey);
+        _enemyCfg  = HeroConfig.GetUnit(HeroConfig.EnemyKey);
+
         InitPlayer();
         InitEnemies();
         InitServices();
@@ -37,7 +40,7 @@ public partial class BattleScene : Node2D
         InitNodes();
         InitHud();
 
-        _hud.Log($"训练场就绪  ATK={_player.GetStat("Atk"):F0}  [Z]普攻 [X]AOE [C]充能 [1~6]命座 [WASD]移动 [R]重置 [T]清Log");
+        _hud.Log($"训练场就绪  ATK={_player.GetStat("Atk"):F0}  [{_playerCfg?.Name}]  [Z]普攻 [X]AOE [C]充能 [1~6]命座 [WASD]移动 [R]重置 [T]清Log");
     }
 
     // ════════════════════════════════════════════════════════
@@ -47,7 +50,7 @@ public partial class BattleScene : Node2D
     private void InitPlayer()
     {
         _player = new UnitEntity { Team = TeamFlag.Friendly };
-        HeroConfig.InitStats(_player);
+        HeroConfig.InitStats(_player, HeroConfig.PlayerKey);
     }
 
     private void InitEnemies()
@@ -55,10 +58,7 @@ public partial class BattleScene : Node2D
         for (int i = 0; i < 3; i++)
         {
             var e = new UnitEntity { Team = TeamFlag.Enemy };
-            e.Stats.Set("HP", EnemyHp);
-            e.Stats.Set("DefFinal", 0f);
-            e.Stats.Set("ToughnessMax", EnemyToughness);
-            e.Stats.Set("Toughness", EnemyToughness);
+            HeroConfig.InitStats(e, HeroConfig.EnemyKey);
             _enemies.Add(e);
         }
     }
@@ -79,10 +79,13 @@ public partial class BattleScene : Node2D
 
     private void InitAbilities()
     {
-        foreach (var file in HeroConfig.AbilityFiles)
+        // 玩家技能（从配置读取）
+        foreach (var file in HeroConfig.GetAbilities(HeroConfig.PlayerKey))
             _player.EquipAbility(AbilityLoader.Create(file));
 
-        _constellation = new ConstellationManager(_player, HeroConfig.ConstellationFiles);
+        // 命座（从配置读取 constellation → abilityFile）
+        var constFiles = HeroConfig.GetConstellationFiles(HeroConfig.PlayerKey);
+        _constellation = new ConstellationManager(_player, constFiles);
     }
 
     private void InitNodes()
@@ -90,21 +93,30 @@ public partial class BattleScene : Node2D
         var vfxSvc = ((GodotCFBridge)CFBridge.Bridge).Vfx as GodotVfxService;
 
         _playerNode = GetNode<UnitNode>("PlayerUnit");
-        _playerNode.Init(_player, Colors.CornflowerBlue, MaxHp, isPlayer: true);
+        _playerNode.Init(_player, ConfigToColor(_playerCfg), _playerCfg?.Hp ?? 1000f, isPlayer: true);
         vfxSvc?.Register(_player, _playerNode);
         _player.Position = new System.Numerics.Vector3(_playerNode.Position.X, _playerNode.Position.Y, 0f);
 
         for (int i = 0; i < 3; i++)
         {
             var node = GetNode<UnitNode>($"Enemy{i}");
-            node.Init(_enemies[i], Colors.Tomato, EnemyHp);
+            node.Init(_enemies[i], ConfigToColor(_enemyCfg), _enemyCfg?.Hp ?? 600f);
             vfxSvc?.Register(_enemies[i], node);
             _enemies[i].Position = new System.Numerics.Vector3(node.Position.X, node.Position.Y, 0f);
             _enemyNodes.Add(node);
 
-            if (i < 2)
-                _enemies[i].EquipAbility(AbilityLoader.Create("radiance_aura.json", level: i + 1));
+            // 敌人装备配置中的技能（如辉耀光环）
+            var enemyAbilities = HeroConfig.GetAbilities(HeroConfig.EnemyKey);
+            if (enemyAbilities.Length > 0 && i < enemyAbilities.Length)
+                _enemies[i].EquipAbility(AbilityLoader.Create(enemyAbilities[i], level: i + 1));
         }
+    }
+
+    private static Color ConfigToColor(UnitConfig cfg)
+    {
+        if (cfg?.BodyColor == null || cfg.BodyColor.Length < 3)
+            return Colors.Gray;
+        return new Color(cfg.BodyColor[0], cfg.BodyColor[1], cfg.BodyColor[2]);
     }
 
     private void InitHud()
@@ -165,7 +177,10 @@ public partial class BattleScene : Node2D
 
         // 无敌模式：先锁定敌人 HP
         if (TrainingConfig.EnemyInvincible)
-            foreach (var e in _enemies) e.Stats.Set("HP", EnemyHp);
+        {
+            float hp = _enemyCfg?.Hp ?? 600f;
+            foreach (var e in _enemies) e.Stats.Set("HP", hp);
+        }
 
         bool ok = _player.TryCast(abilityName, target);
         if (!ok)
@@ -206,8 +221,8 @@ public partial class BattleScene : Node2D
     private void ResetBattle()
     {
         ResetEnemies();
-        _player.Stats.Set("HP", MaxHp);
-        _player.Stats.Set("Energy", MaxEnergy);
+        _player.Stats.Set("HP", _playerCfg?.Hp ?? 1000f);
+        _player.Stats.Set("Energy", _playerCfg?.MaxEnergy ?? 100f);
         _player.ModifierManager.ActivateAll();
         _damageTracker.Reset();
         _hud.Log("── 战场已重置 ──");
@@ -215,10 +230,12 @@ public partial class BattleScene : Node2D
 
     private void ResetEnemies()
     {
+        float hp = _enemyCfg?.Hp ?? 600f;
+        float tough = _enemyCfg?.ToughnessMax ?? 0f;
         foreach (var e in _enemies)
         {
-            e.Stats.Set("HP", EnemyHp);
-            e.Stats.Set("Toughness", EnemyToughness);
+            e.Stats.Set("HP", hp);
+            if (tough > 0f) e.Stats.Set("Toughness", tough);
             e.ModifierManager.ActivateAll();
         }
     }
@@ -236,13 +253,13 @@ public partial class BattleScene : Node2D
 
         // ── 训练模式 ──
         if (TrainingConfig.EnergyLock)
-            _player.Stats.Set("Energy", MaxEnergy);
+            _player.Stats.Set("Energy", _playerCfg?.MaxEnergy ?? 100f);
 
         _damageTracker.Update(dt);
 
         _hud.Update(
-            hp: _player.GetStat("HP"), maxHp: MaxHp,
-            energy: _player.GetStat("Energy"), maxEnergy: MaxEnergy,
+            hp: _player.GetStat("HP"), maxHp: _playerCfg?.Hp ?? 1000f,
+            energy: _player.GetStat("Energy"), maxEnergy: _playerCfg?.MaxEnergy ?? 100f,
             constellationUnlocked: _constellation.Unlocked);
         _hud.UpdateStatsPanel(_damageTracker);
     }

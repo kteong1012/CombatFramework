@@ -1,0 +1,5 @@
+{
+    "Name": "能量充盈",
+    "Desc": "击杀回能 20",
+    "AbilityFile": "const_04_energy_surge.json"
+}

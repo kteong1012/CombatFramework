@@ -1,0 +1,11 @@
+{
+    "Name": "训练假人",
+    "Hp": 600,
+    "AtkBase": 0,
+    "DefFinal": 0,
+    "MaxEnergy": 0,
+    "MoveSpeed": 0,
+    "ToughnessMax": 300,
+    "Abilities": ["radiance_aura.json"],
+    "BodyColor": [1.0, 0.4, 0.3]
+}

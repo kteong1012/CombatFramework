@@ -1,0 +1,5 @@
+{
+    "Name": "战技强化",
+    "Desc": "战技等级 +1",
+    "AbilityFile": "const_01_skill_enhance.json"
+}

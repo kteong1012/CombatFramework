@@ -1,0 +1,5 @@
+{
+    "Name": "普攻强化",
+    "Desc": "普攻等级 +2",
+    "AbilityFile": "const_02_normal_enhance.json"
+}

@@ -1,0 +1,5 @@
+{
+    "Name": "暴击大师",
+    "Desc": "暴击率 +20%，暴伤 +50%",
+    "AbilityFile": "const_06_crit_master.json"
+}

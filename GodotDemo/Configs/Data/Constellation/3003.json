@@ -1,0 +1,5 @@
+{
+    "Name": "破韧专家",
+    "Desc": "破韧增伤 +30%",
+    "AbilityFile": "const_03_break_master.json"
+}
