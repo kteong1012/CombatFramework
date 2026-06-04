@@ -34,7 +34,10 @@ public class ModifierManager
             if (data.StackMode == ModifierStackMode.StackCount)
                 existing.IncrementStack();
             else
+            {
                 existing.SetDuration(data.DurationGetter);
+                existing.RefreshCaster(caster);
+            }
             return;
         }
 
@@ -70,6 +73,32 @@ public class ModifierManager
     {
         _modifiers.RemoveAll(m => m.SourceTag == tag);
         _pendingAdd.RemoveAll(m => m.SourceTag == tag);
+    }
+
+    /// <summary>死亡驱散：移除所有 modifier。</summary>
+    public void PurgeAll()
+    {
+        for (int i = _modifiers.Count - 1; i >= 0; i--)
+        {
+            _modifiers[i].OnDeath();
+            _modifiers[i].OnDestroy();
+            _modifiers.RemoveAt(i);
+        }
+        _pendingAdd.Clear();
+    }
+
+    /// <summary>失活全部 modifier：停止特效和计时。死亡时调用。</summary>
+    public void DeactivateAll()
+    {
+        foreach (var m in _modifiers) m.Deactivate();
+        foreach (var m in _pendingAdd) m.Deactivate();
+    }
+
+    /// <summary>激活全部 modifier：恢复特效和计时。复活时调用。</summary>
+    public void ActivateAll()
+    {
+        foreach (var m in _modifiers) m.Activate();
+        foreach (var m in _pendingAdd) m.Activate();
     }
 
     // ─── 查询 ─────────────────────────────────────────────────

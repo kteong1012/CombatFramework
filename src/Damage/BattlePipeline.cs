@@ -238,6 +238,7 @@ public static class BattlePipeline
 
         if (damageToConsume > 0 && victim.GetStat("HP") <= 0)
         {
+            victim.ModifierManager.DeactivateAll();
             EventBus.Global.Publish(EventBus.Events.EntityKilled,
                 new { Victim = victim, Attacker = attacker });
         }

@@ -1,5 +1,23 @@
 {
     "Name": "radiance_aura",
+
+    "AbilityEvents": {
+        "OnEquipped": [
+            {
+                "$type": "ApplyModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "radiance_aura"
+            }
+        ],
+        "OnUnequipped": [
+            {
+                "$type": "RemoveModifierActionData",
+                "Target": { "$type": "SingleTargetSelector", "Type": "Owner" },
+                "ModifierName": "radiance_aura"
+            }
+        ]
+    },
+
     "AbilityModifiers": {
         "radiance_aura": {
             "Name": "radiance_aura",
@@ -24,7 +42,7 @@
         },
         "radiance_burn": {
             "Name": "radiance_burn",
-            "DurationGetter": { "$type": "const", "Value": 0.1 },
+            "DurationGetter": { "$type": "const", "Value": 0.2 },
             "IsDebuff": true,
             "IsHidden": true,
             "ThinkInterval": 0.1,

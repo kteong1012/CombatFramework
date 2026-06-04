@@ -16,13 +16,15 @@ public class ModifierSpec
     public string Name => Data.Name;
 
     public UnitEntity Parent { get; }
-    public UnitEntity Caster { get; }
+    public UnitEntity Caster { get; private set; }
     public AbilitySpec SourceAbility { get; }
 
     public string SourceTag { get; set; }
     public int StackCount { get; private set; } = 1;
     public float RemainingTime { get; private set; }
     public bool IsExpired { get; private set; }
+    public bool IsActive { get; private set; } = true;
+    private float _thinkTimer;
 
     #region Factory
     /// <summary>
@@ -68,6 +70,28 @@ public class ModifierSpec
             RemainingTime = getter.GetValue(null);
     }
 
+    public void RefreshCaster(UnitEntity newCaster)
+    {
+        if (newCaster != null)
+            Caster = newCaster;
+    }
+
+    /// <summary>失活：停止特效和计时，但保留数据。死亡时调用。</summary>
+    public void Deactivate()
+    {
+        if (!IsActive) return;
+        IsActive = false;
+        StopEffect();
+    }
+
+    /// <summary>激活：恢复特效和计时。复活时调用。</summary>
+    public void Activate()
+    {
+        if (IsActive) return;
+        IsActive = true;
+        PlayEffect();
+    }
+
     public void IncrementStack() => StackCount++;
     public void DecrementStack() => StackCount = Math.Max(0, StackCount - 1);
 
@@ -82,6 +106,18 @@ public class ModifierSpec
     public bool Update(float dt)
     {
         if (IsExpired) return true;
+        if (!IsActive) return false;  // 失活：不推进时间、不触发间隔
+
+        // 间隔触发
+        if (Data.ThinkInterval > 0f)
+        {
+            _thinkTimer += dt;
+            while (_thinkTimer >= Data.ThinkInterval)
+            {
+                _thinkTimer -= Data.ThinkInterval;
+                OnIntervalThink();
+            }
+        }
 
         if (Data.StackMode != ModifierStackMode.Permanent && Data.DurationGetter != null)
         {

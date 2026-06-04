@@ -98,19 +98,10 @@ public partial class BattleScene : Node2D
             vfxSvc.Register(_enemies[i], node);
             _enemies[i].Position = new System.Numerics.Vector3(node.Position.X, node.Position.Y, 0f);
             _enemyNodes.Add(node);
-        }
 
-        // ── 给敌人挂辉耀光环：每秒对 200 半径内敌方施加 radiance_burn ──
-        // burn 用 StackMode:None，先来的敌人拥有 debuff 所有权
-        var radianceData = LoadAbility("radiance_aura.json");
-        if (radianceData?.AbilityModifiers?.TryGetValue("radiance_aura", out var auraMod) == true)
-        {
-            for (int i = 0; i < 2; i++)
-            {
-                var spec = AbilitySpec.Create(radianceData);
-                _enemies[i].AbilitySlots.Equip(SlotType.Const0, spec);
-                _enemies[i].ModifierManager.Add(auraMod, _enemies[i], spec);
-            }
+            // 前两个敌人装备辉耀光环
+            if (i < 2)
+                _enemies[i].AbilitySlots.Equip(SlotType.Const0, AbilitySpec.Create(LoadAbility("radiance_aura.json")));
         }
 
         _logLabel    = GetNode<Label>("UI/Log");
@@ -224,6 +215,9 @@ public partial class BattleScene : Node2D
         foreach (var e in _enemies) e.Stats.Set("HP", EnemyHp);
         _player.Stats.Set("HP", MaxHp);
         _player.Stats.Set("Energy", 100f);
+        // 复活：重新激活全部 modifier
+        foreach (var e in _enemies) e.ModifierManager.ActivateAll();
+        _player.ModifierManager.ActivateAll();
         Log("── 战场已重置 [R 可手动重置] ──");
     }
 

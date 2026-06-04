@@ -26,6 +26,9 @@ public class ModifierData
     /// <summary>自动特效名。非空时 OnCreated 自动调用 Vfx.PlayOnUnit，OnDestroy 自动调用 StopOnUnit。</summary>
     public string EffectName { get; set; }
 
+    /// <summary>OnIntervalThink 触发间隔（秒）。0 表示不启用间隔触发。</summary>
+    public float ThinkInterval { get; set; }
+
     /// <summary>事件名 → Action 列表。Key 对应 ModifierEvents 常量。</summary>
     public Dictionary<string, List<AbilityEventActionData>> Events { get; set; }
 }
