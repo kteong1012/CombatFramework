@@ -158,11 +158,11 @@ public partial class HUD : Control
 
     private void BuildSkillBar(Control parent)
     {
-        var defs = new (SkillIcon.IconType icon, string key, string cost)[]
+        var defs = new (string icon, string key, string cost)[]
         {
-            (SkillIcon.IconType.Slash,  "Z", "30 EN"),
-            (SkillIcon.IconType.Burst,  "X", "40 EN"),
-            (SkillIcon.IconType.Charge, "C", "50 EN"),
+            ("res://Textures/icon_slash.png",  "Z", "30 EN"),
+            ("res://Textures/icon_burst.png",  "X", "40 EN"),
+            ("res://Textures/icon_charge.png", "C", "50 EN"),
         };
 
         const float slotW = 80f, slotH = 80f, slotGap = 12f;
@@ -172,19 +172,23 @@ public partial class HUD : Control
 
         for (int i = 0; i < defs.Length; i++)
         {
-            var (iconType, key, cost) = defs[i];
+            var (iconPath, key, cost) = defs[i];
             float x = startX + i * (slotW + slotGap);
 
             parent.AddChild(MakeRect(x, startY, slotW, slotH, new Color(0.10f, 0.10f, 0.13f, 0.92f)));
 
-            // 代码绘制图标
-            var icon = new SkillIcon
+            var tex = GD.Load<Texture2D>(iconPath);
+            if (tex != null)
             {
-                Type = iconType,
-                Position = new Vector2(x + 10f, startY + 6f),
-                Size = new Vector2(slotW - 20f, slotH - 30f),
-            };
-            parent.AddChild(icon);
+                var icon = new TextureRect
+                {
+                    Texture = tex, ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
+                    StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
+                    Position = new Vector2(x + 10f, startY + 6f),
+                    Size = new Vector2(slotW - 20f, slotH - 30f),
+                };
+                parent.AddChild(icon);
+            }
 
             parent.AddChild(MakeLabel(key, x + 4f, startY + 3f, 14, Colors.Yellow));
 
